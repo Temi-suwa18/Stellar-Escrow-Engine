@@ -65,7 +65,7 @@ export function CodeWindow({
   return (
     <div
       className={cn(
-        'border-border overflow-hidden rounded-xl border bg-[#0b0f19] shadow-2xl shadow-black/10 dark:shadow-black/40',
+        'border-border overflow-hidden rounded-md border bg-[#0b0f19] shadow-2xl shadow-black/10 dark:shadow-black/40',
         className,
       )}
     >

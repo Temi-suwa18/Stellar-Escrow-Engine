@@ -32,7 +32,11 @@ export function DevelopersSection() {
     <section id="developers" className="border-border bg-muted/30 border-t py-24">
       <div className="container">
         <FadeIn className="mx-auto max-w-2xl text-center">
-          <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">
+          <span className="text-primary flex items-center justify-center gap-1.5 text-xs uppercase tracking-widest">
+            <span className="bg-primary h-1.5 w-1.5 rounded-full" />
+            Developers
+          </span>
+          <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight sm:text-4xl">
             Built for developers
           </h2>
           <p className="text-muted-foreground mt-4 text-balance">
@@ -44,12 +48,12 @@ export function DevelopersSection() {
         <div className="mt-14 grid gap-4 sm:grid-cols-3">
           {DEV_TOOLS.map(({ icon: Icon, title, description }, index) => (
             <FadeIn key={title} delay={index * 0.05}>
-              <Card className="h-full">
+              <Card className="h-full rounded-md">
                 <CardHeader>
-                  <div className="bg-primary/10 text-primary mb-1 flex h-10 w-10 items-center justify-center rounded-lg">
-                    <Icon className="h-5 w-5" />
+                  <div className="bg-primary/10 text-primary border-primary/30 mb-1 flex h-9 w-9 items-center justify-center rounded-md border">
+                    <Icon className="h-4 w-4" />
                   </div>
-                  <CardTitle className="text-base">{title}</CardTitle>
+                  <CardTitle className="text-sm uppercase tracking-wide">{title}</CardTitle>
                   <CardDescription>{description}</CardDescription>
                 </CardHeader>
               </Card>
@@ -65,13 +69,13 @@ export function DevelopersSection() {
             {LANGUAGES.map((lang) => (
               <span
                 key={lang}
-                className="border-border bg-background rounded-full border px-3.5 py-1.5 text-sm font-medium"
+                className="border-border bg-background rounded-md border px-3.5 py-1.5 text-xs uppercase tracking-widest"
               >
                 {lang}
               </span>
             ))}
           </div>
-          <Button variant="outline" asChild>
+          <Button variant="outline" className="uppercase tracking-widest" asChild>
             <Link href="/docs">
               Explore the developer portal <ArrowRight className="ml-1.5 h-4 w-4" />
             </Link>

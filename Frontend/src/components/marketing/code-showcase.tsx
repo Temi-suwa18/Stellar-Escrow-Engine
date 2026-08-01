@@ -101,7 +101,11 @@ export function CodeShowcase() {
     <section id="products" className="border-border bg-muted/30 border-t py-24">
       <div className="container">
         <FadeIn className="mx-auto max-w-2xl text-center">
-          <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">
+          <span className="text-primary flex items-center justify-center gap-1.5 text-xs uppercase tracking-widest">
+            <span className="bg-primary h-1.5 w-1.5 rounded-full" />
+            Products
+          </span>
+          <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight sm:text-4xl">
             Same API. Different deal.
           </h2>
           <p className="text-muted-foreground mt-4 text-balance">
@@ -112,9 +116,13 @@ export function CodeShowcase() {
 
         <FadeIn delay={0.1} className="mx-auto mt-14 max-w-5xl">
           <Tabs defaultValue="freelance">
-            <TabsList className="mx-auto flex h-auto w-fit flex-wrap justify-center gap-1">
+            <TabsList className="mx-auto flex h-auto w-fit flex-wrap justify-center gap-1 rounded-md">
               {TABS.map((tab) => (
-                <TabsTrigger key={tab.value} value={tab.value}>
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="text-xs uppercase tracking-widest"
+                >
                   {tab.label}
                 </TabsTrigger>
               ))}

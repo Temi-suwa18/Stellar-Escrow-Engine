@@ -53,7 +53,7 @@ export function Footer() {
 
           {Object.entries(FOOTER_LINKS).map(([heading, links]) => (
             <div key={heading} className="flex flex-col gap-3">
-              <h4 className="text-sm font-semibold">{heading}</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-widest">{heading}</h4>
               <ul className="flex flex-col gap-2.5">
                 {links.map((link) => (
                   <li key={link.label}>

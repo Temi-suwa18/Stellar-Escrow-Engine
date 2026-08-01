@@ -5,7 +5,7 @@ FROM node:20.11.0-bookworm-slim AS base
 RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 WORKDIR /app
 
-# --- Prune: extract only what apps/api needs from the monorepo ---
+# --- Prune: extract only what Backend needs from the monorepo ---
 FROM base AS pruner
 COPY . .
 RUN pnpm add -g turbo@2.3.3
@@ -39,4 +39,4 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "require('http').get('http://127.0.0.1:4000/health/live', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
-CMD ["node", "apps/api/dist/main.js"]
+CMD ["node", "Backend/dist/main.js"]

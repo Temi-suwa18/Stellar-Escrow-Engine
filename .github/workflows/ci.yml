@@ -108,12 +108,12 @@ jobs:
         run: pnpm build
 
   docker-build:
-    name: Docker Build (api, web)
+    name: Docker Build (Backend, Frontend)
     runs-on: ubuntu-latest
     needs: [build]
     strategy:
       matrix:
-        app: [api, web]
+        app: [Backend, Frontend]
     steps:
       - uses: actions/checkout@v4
 
@@ -123,7 +123,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/${{ matrix.app }}/Dockerfile
+          file: ${{ matrix.app }}/Dockerfile
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max

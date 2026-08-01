@@ -27,9 +27,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+COPY --from=builder --chown=nextjs:nodejs /app/Frontend/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/Frontend/.next/static ./Frontend/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/Frontend/public ./Frontend/public
 
 USER nextjs
 EXPOSE 3000
@@ -37,4 +37,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "require('http').get('http://127.0.0.1:3000', (r) => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"
 
-CMD ["node", "apps/web/server.js"]
+CMD ["node", "Frontend/server.js"]

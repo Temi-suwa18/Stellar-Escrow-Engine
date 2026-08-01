@@ -35,7 +35,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: Backend/Dockerfile
     restart: unless-stopped
     env_file: .env
     environment:
@@ -58,7 +58,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
+      dockerfile: Frontend/Dockerfile
     restart: unless-stopped
     env_file: .env
     environment:

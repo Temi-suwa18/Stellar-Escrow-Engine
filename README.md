@@ -12,20 +12,18 @@ the API.
 ## Monorepo layout
 
 ```
-apps/
-  api/            NestJS backend — REST API, background jobs, webhooks
-  web/            Next.js merchant dashboard (App Router)
+Frontend/           Next.js dashboard & marketing site (App Router)
+Backend/             NestJS API — escrows, auth, organizations, webhooks
+Blockchain/          Soroban smart contracts (escrow, milestones)
+Infra/
+  docker/           Supporting Docker assets
+  terraform/        Terraform-ready infrastructure-as-code
 packages/
-  database/       Prisma schema + generated client (shared by api and jobs)
-  types/          Shared TypeScript types/DTOs between api and web
-  config/         Shared tsconfig presets
+  database/         Prisma schema + generated client (shared by Backend)
+  config/           Shared tsconfig presets
 sdks/
-  typescript/     Official TypeScript/JavaScript SDK
-contracts/        Soroban smart contracts (escrow, milestones, split payments, treasury, subscriptions)
-infra/
-  docker/         Supporting Docker assets
-  terraform/      Terraform-ready infrastructure-as-code
-docs/             Architecture and API documentation
+  typescript/       Official TypeScript/JavaScript SDK
+docs/               Architecture and API documentation
 ```
 
 ## Tech stack

@@ -26,7 +26,11 @@ export function HowItWorks() {
     <section id="how-it-works" className="border-border border-t py-24">
       <div className="container">
         <FadeIn className="mx-auto max-w-2xl text-center">
-          <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">
+          <span className="text-primary flex items-center justify-center gap-1.5 text-xs uppercase tracking-widest">
+            <span className="bg-primary h-1.5 w-1.5 rounded-full" />
+            How it works
+          </span>
+          <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight sm:text-4xl">
             Live in an afternoon
           </h2>
           <p className="text-muted-foreground mt-4 text-balance">
@@ -46,10 +50,10 @@ export function HowItWorks() {
               delay={index * 0.1}
               className="relative flex flex-col items-center text-center sm:items-start sm:text-left"
             >
-              <div className="border-border bg-background text-primary relative z-10 flex h-12 w-12 items-center justify-center rounded-full border text-sm font-bold">
+              <div className="border-border bg-background text-primary relative z-10 flex h-12 w-12 items-center justify-center rounded-md border font-mono text-sm font-bold">
                 {item.step}
               </div>
-              <h3 className="mt-4 font-semibold">{item.title}</h3>
+              <h3 className="mt-4 text-sm font-semibold uppercase tracking-wide">{item.title}</h3>
               <p className="text-muted-foreground mt-2 text-sm">{item.description}</p>
             </FadeIn>
           ))}
