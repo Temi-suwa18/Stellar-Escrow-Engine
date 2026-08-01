@@ -114,9 +114,7 @@ export class AuthService {
     });
 
     const providerEnum = profile.provider.toUpperCase() as 'GOOGLE' | 'GITHUB';
-    const userId = existingUser
-      ? existingUser.id
-      : await this.createUserFromOAuth(profile);
+    const userId = existingUser ? existingUser.id : await this.createUserFromOAuth(profile);
 
     await this.prisma.client.oAuthAccount.create({
       data: {
@@ -200,7 +198,6 @@ export class AuthService {
     const base = slugify(name);
     let candidate = base;
     let suffix = 0;
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const existing = await this.prisma.client.organization.findUnique({
         where: { slug: candidate },

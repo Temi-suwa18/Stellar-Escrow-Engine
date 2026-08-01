@@ -1,5 +1,5 @@
 {
-  "extends": "@stellar-commerce/config/tsconfig.nestjs.json",
+  "extends": "@stellar-escrow/config/tsconfig.nestjs.json",
   "compilerOptions": {
     "outDir": "./dist",
     "baseUrl": "./",

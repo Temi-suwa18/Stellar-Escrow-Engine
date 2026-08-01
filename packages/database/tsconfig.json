@@ -1,5 +1,5 @@
 {
-  "extends": "@stellar-commerce/config/tsconfig.base.json",
+  "extends": "@stellar-escrow/config/tsconfig.base.json",
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "Bundler",

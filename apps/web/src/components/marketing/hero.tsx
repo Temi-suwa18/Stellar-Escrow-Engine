@@ -45,7 +45,7 @@ export function Hero() {
       <div className="container grid gap-16 pb-24 pt-20 lg:grid-cols-2 lg:items-center lg:pb-32 lg:pt-28">
         <FadeIn className="flex flex-col items-start gap-6">
           <Badge variant="secondary" className="gap-1.5 py-1.5 pl-2 pr-3">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <Sparkles className="text-primary h-3.5 w-3.5" />
             Built on Soroban · Non-custodial
           </Badge>
 
@@ -57,7 +57,7 @@ export function Hero() {
             for Stellar
           </h1>
 
-          <p className="max-w-xl text-balance text-lg text-muted-foreground">
+          <p className="text-muted-foreground max-w-xl text-balance text-lg">
             One API for freelance work, ecommerce orders, vehicle/rental deposits, and logistics
             shipments — with milestone releases, disputes, and multi-sig approval built in. Apps
             just call the API.
@@ -74,12 +74,12 @@ export function Hero() {
             </Button>
           </div>
 
-          <dl className="mt-4 grid w-full grid-cols-3 gap-6 border-t border-border pt-6">
+          <dl className="border-border mt-4 grid w-full grid-cols-3 gap-6 border-t pt-6">
             {STATS.map((stat) => (
               <div key={stat.label} className="flex flex-col gap-1">
                 <dt className="sr-only">{stat.label}</dt>
                 <dd className="text-2xl font-bold tracking-tight">{stat.value}</dd>
-                <dd className="text-xs text-muted-foreground">{stat.label}</dd>
+                <dd className="text-muted-foreground text-xs">{stat.label}</dd>
               </div>
             ))}
           </dl>

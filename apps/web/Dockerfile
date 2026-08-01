@@ -7,7 +7,7 @@ WORKDIR /app
 FROM base AS pruner
 COPY . .
 RUN pnpm add -g turbo@2.3.3
-RUN turbo prune @stellar-commerce/web --docker
+RUN turbo prune @stellar-escrow/web --docker
 
 FROM base AS installer
 COPY --from=pruner /app/out/json/ .
@@ -19,7 +19,7 @@ COPY --from=installer /app .
 COPY --from=pruner /app/out/full/ .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm add -g turbo@2.3.3
-RUN turbo build --filter=@stellar-commerce/web...
+RUN turbo build --filter=@stellar-escrow/web...
 
 FROM node:20.11.0-bookworm-slim AS runner
 RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs

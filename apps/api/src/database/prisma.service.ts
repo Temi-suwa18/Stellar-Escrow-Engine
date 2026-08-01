@@ -1,9 +1,9 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
-import { prisma, type PrismaClient } from '@stellar-commerce/database';
+import { prisma, type PrismaClient } from '@stellar-escrow/database';
 
 /**
  * Thin NestJS lifecycle wrapper around the shared Prisma singleton from
- * `@stellar-commerce/database`. The singleton itself is process-wide (so hot
+ * `@stellar-escrow/database`. The singleton itself is process-wide (so hot
  * reload in dev doesn't open a new connection pool per reload); this service
  * just hooks it into Nest's module lifecycle so the pool drains cleanly on
  * shutdown.

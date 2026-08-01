@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { MemberRole } from '@stellar-commerce/database';
+import type { MemberRole } from '@stellar-escrow/database';
 import { PrismaService } from '../../database/prisma.service';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import type { AuthRequest } from '../types/auth-request';

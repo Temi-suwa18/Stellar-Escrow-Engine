@@ -18,10 +18,10 @@
     "typecheck": "turbo run typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
-    "db:generate": "pnpm --filter @stellar-commerce/database generate",
-    "db:migrate": "pnpm --filter @stellar-commerce/database migrate:dev",
-    "db:seed": "pnpm --filter @stellar-commerce/database seed",
-    "db:studio": "pnpm --filter @stellar-commerce/database studio",
+    "db:generate": "pnpm --filter @stellar-escrow/database generate",
+    "db:migrate": "pnpm --filter @stellar-escrow/database migrate:dev",
+    "db:seed": "pnpm --filter @stellar-escrow/database seed",
+    "db:studio": "pnpm --filter @stellar-escrow/database studio",
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {

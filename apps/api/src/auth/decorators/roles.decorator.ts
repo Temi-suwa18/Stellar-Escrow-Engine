@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import type { MemberRole } from '@stellar-commerce/database';
+import type { MemberRole } from '@stellar-escrow/database';
 
 export const ROLES_KEY = 'roles';
 

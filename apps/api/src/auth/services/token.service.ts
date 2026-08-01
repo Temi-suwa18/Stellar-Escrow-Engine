@@ -32,10 +32,10 @@ export class TokenService {
 
   signRefreshToken(userId: string, sessionId: string): { token: string; expiresIn: string } {
     const expiresIn = this.config.get('JWT_REFRESH_TTL', { infer: true });
-    const token = this.jwt.sign(
-      { sub: userId, sid: sessionId } satisfies RefreshTokenPayload,
-      { secret: this.config.get('JWT_REFRESH_SECRET', { infer: true }), expiresIn },
-    );
+    const token = this.jwt.sign({ sub: userId, sid: sessionId } satisfies RefreshTokenPayload, {
+      secret: this.config.get('JWT_REFRESH_SECRET', { infer: true }),
+      expiresIn,
+    });
     return { token, expiresIn };
   }
 

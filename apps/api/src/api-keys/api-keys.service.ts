@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { ApiKeyMode } from '@stellar-commerce/database';
+import type { ApiKeyMode } from '@stellar-escrow/database';
 import { PrismaService } from '../database/prisma.service';
 import { generateOpaqueToken, hashToken } from '../common/crypto.util';
 

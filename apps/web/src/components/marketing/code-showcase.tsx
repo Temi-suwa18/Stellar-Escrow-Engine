@@ -98,13 +98,13 @@ await escrow.dispute(deposit.id, { reason: "Damage reported" });`,
 
 export function CodeShowcase() {
   return (
-    <section id="products" className="border-t border-border bg-muted/30 py-24">
+    <section id="products" className="border-border bg-muted/30 border-t py-24">
       <div className="container">
         <FadeIn className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">
             Same API. Different deal.
           </h2>
-          <p className="mt-4 text-balance text-muted-foreground">
+          <p className="text-muted-foreground mt-4 text-balance">
             The category changes what defaults apply — the integration you write doesn&apos;t
             change.
           </p>
@@ -126,7 +126,7 @@ export function CodeShowcase() {
                   <ul className="flex flex-col gap-3 lg:order-2">
                     {tab.points.map((point) => (
                       <li key={point} className="flex items-start gap-2.5 text-sm">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                        <Check className="text-primary mt-0.5 h-4 w-4 shrink-0" />
                         <span>{point}</span>
                       </li>
                     ))}

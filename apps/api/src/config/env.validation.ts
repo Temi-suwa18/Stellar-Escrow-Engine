@@ -30,7 +30,7 @@ export const envSchema = z.object({
 
   MAGIC_LINK_TTL_MINUTES: z.coerce.number().int().positive().default(15),
 
-  EMAIL_FROM: z.string().min(1).default('Stellar Commerce <noreply@stellarcommerce.dev>'),
+  EMAIL_FROM: z.string().min(1).default('Stellar Escrow Engine <noreply@stellarescrow.dev>'),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().positive().default(587),
   SMTP_USER: z.string().optional(),

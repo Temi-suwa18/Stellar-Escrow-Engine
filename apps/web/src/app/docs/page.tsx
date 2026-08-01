@@ -31,7 +31,7 @@ export default function DocsPage() {
           <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
             <Button asChild>
               <Link
-                href="https://github.com/Temi-suwa18/Stellar-Commerce-API"
+                href="https://github.com/Temi-suwa18/Stellar-Escrow-Engine"
                 target="_blank"
                 rel="noreferrer"
               >

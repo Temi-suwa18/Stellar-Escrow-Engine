@@ -1,4 +1,4 @@
-// Stellar Commerce API — primary datastore schema.
+// Stellar Escrow Engine API — primary datastore schema.
 //
 // Conventions used throughout this file:
 // - Ids are cuid() strings, not auto-increment ints — safe to generate

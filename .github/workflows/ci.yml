@@ -54,10 +54,10 @@ jobs:
         env:
           POSTGRES_USER: stellar
           POSTGRES_PASSWORD: stellar
-          POSTGRES_DB: stellar_commerce_test
+          POSTGRES_DB: stellar_escrow_test
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U stellar -d stellar_commerce_test"
+          --health-cmd "pg_isready -U stellar -d stellar_escrow_test"
           --health-interval 5s --health-timeout 5s --health-retries 10
       redis:
         image: redis:7-alpine
@@ -65,7 +65,7 @@ jobs:
         options: >-
           --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
-      DATABASE_URL: postgresql://stellar:stellar@localhost:5432/stellar_commerce_test?schema=public
+      DATABASE_URL: postgresql://stellar:stellar@localhost:5432/stellar_escrow_test?schema=public
       REDIS_URL: redis://localhost:6379/1
     steps:
       - uses: actions/checkout@v4

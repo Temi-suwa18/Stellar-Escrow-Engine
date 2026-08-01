@@ -9,7 +9,7 @@ WORKDIR /app
 FROM base AS pruner
 COPY . .
 RUN pnpm add -g turbo@2.3.3
-RUN turbo prune @stellar-commerce/api --docker
+RUN turbo prune @stellar-escrow/api --docker
 
 # --- Install dependencies for the pruned subset ---
 FROM base AS installer
@@ -22,7 +22,7 @@ FROM base AS builder
 COPY --from=installer /app .
 COPY --from=pruner /app/out/full/ .
 RUN pnpm add -g turbo@2.3.3
-RUN turbo build --filter=@stellar-commerce/api...
+RUN turbo build --filter=@stellar-escrow/api...
 
 # --- Runtime ---
 FROM node:20.11.0-bookworm-slim AS runner

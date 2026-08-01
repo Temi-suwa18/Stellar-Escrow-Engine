@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString, MaxLength, MinLength } from 'class-validator';
-import { ApiKeyMode } from '@stellar-commerce/database';
+import { ApiKeyMode } from '@stellar-escrow/database';
 
 export class CreateApiKeyDto {
   @ApiProperty({ example: 'Backend server key' })

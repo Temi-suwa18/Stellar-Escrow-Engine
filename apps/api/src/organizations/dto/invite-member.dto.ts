@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsEnum } from 'class-validator';
-import { MemberRole } from '@stellar-commerce/database';
+import { MemberRole } from '@stellar-escrow/database';
 
 export class InviteMemberDto {
   @ApiProperty({ example: 'teammate@example.com' })

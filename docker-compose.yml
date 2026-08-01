@@ -1,4 +1,4 @@
-name: stellar-commerce
+name: stellar-escrow
 
 services:
   postgres:
@@ -7,13 +7,13 @@ services:
     environment:
       POSTGRES_USER: stellar
       POSTGRES_PASSWORD: stellar
-      POSTGRES_DB: stellar_commerce
+      POSTGRES_DB: stellar_escrow
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U stellar -d stellar_commerce"]
+      test: ["CMD-SHELL", "pg_isready -U stellar -d stellar_escrow"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -39,7 +39,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://stellar:stellar@postgres:5432/stellar_commerce?schema=public
+      DATABASE_URL: postgresql://stellar:stellar@postgres:5432/stellar_escrow?schema=public
       REDIS_URL: redis://redis:6379
     ports:
       - "4000:4000"

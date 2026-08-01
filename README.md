@@ -89,16 +89,16 @@ placeholders — before moving to the next.
       milestones, split payments/recipients, treasury transfers/approvals,
       webhook endpoints/events, audit logs, notifications, daily metrics
       rollup, org settings. Money stored as `Decimal(20,7)` for Stellar's
-      7-decimal precision (not 2-decimal cents). `@stellar-commerce/database`
+      7-decimal precision (not 2-decimal cents). `@stellar-escrow/database`
       wired into the API with a Prisma-backed `/health/ready` check.
       Schema validated via `prisma generate` + a real generated migration
       (`prisma migrate diff`); live `migrate dev` against Postgres still
       needs to be run in an environment with a database available.
 - [~] **Module 3 — Authentication & authorization.** Email/password, Google
-      OAuth, GitHub OAuth, magic link, 2FA, session management, API keys,
-      organization invitations, multi-tenant orgs, RBAC (Owner, Admin,
-      Developer, Finance, Viewer). Backend implemented; needs a live-DB test
-      pass and frontend wiring.
+  OAuth, GitHub OAuth, magic link, 2FA, session management, API keys,
+  organization invitations, multi-tenant orgs, RBAC (Owner, Admin,
+  Developer, Finance, Viewer). Backend implemented; needs a live-DB test
+  pass and frontend wiring.
 - [ ] Escrow API (create/fund/release/refund/dispute, milestones) — the core
       product surface for freelance, ecommerce, rental, and logistics
 - [ ] Escrow dashboard (view deals, milestones, disputes)

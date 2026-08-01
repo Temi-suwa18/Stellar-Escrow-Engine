@@ -60,10 +60,10 @@ async function bootstrap(): Promise<void> {
 
   if (nodeEnv !== 'production') {
     const swaggerConfig = new DocumentBuilder()
-      .setTitle('Stellar Commerce API')
+      .setTitle('Stellar Escrow Engine API')
       .setDescription(
-        'Payment infrastructure for the Stellar network — payments, checkout, subscriptions, ' +
-          'invoicing, escrow, split payments, and treasury management.',
+        'A universal escrow protocol on Stellar — freelance, ecommerce, rentals/vehicles, ' +
+          'logistics, and milestone payments. Apps just call the API.',
       )
       .setVersion('1.0')
       .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'session')
@@ -79,7 +79,7 @@ async function bootstrap(): Promise<void> {
   await app.listen(port);
 
   const logger = new Logger('Bootstrap');
-  logger.log(`Stellar Commerce API listening on port ${port} [${nodeEnv}]`);
+  logger.log(`Stellar Escrow Engine API listening on port ${port} [${nodeEnv}]`);
   if (nodeEnv !== 'production') {
     logger.log(`Swagger docs available at http://localhost:${port}/docs`);
   }

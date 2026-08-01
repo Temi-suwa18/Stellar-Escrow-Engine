@@ -62,9 +62,9 @@ export class EmailService implements OnModuleInit {
   async sendMagicLink(to: string, url: string): Promise<void> {
     await this.send({
       to,
-      subject: 'Your Stellar Commerce sign-in link',
-      text: `Sign in to Stellar Commerce: ${url}\n\nThis link expires shortly and can only be used once.`,
-      html: `<p>Sign in to Stellar Commerce:</p><p><a href="${url}">${url}</a></p><p>This link expires shortly and can only be used once.</p>`,
+      subject: 'Your Stellar Escrow Engine sign-in link',
+      text: `Sign in to Stellar Escrow Engine: ${url}\n\nThis link expires shortly and can only be used once.`,
+      html: `<p>Sign in to Stellar Escrow Engine:</p><p><a href="${url}">${url}</a></p><p>This link expires shortly and can only be used once.</p>`,
     });
   }
 
@@ -75,9 +75,9 @@ export class EmailService implements OnModuleInit {
   ): Promise<void> {
     await this.send({
       to,
-      subject: `You've been invited to join ${organizationName} on Stellar Commerce`,
-      text: `You've been invited to join ${organizationName} on Stellar Commerce.\n\nAccept the invitation: ${url}`,
-      html: `<p>You've been invited to join <strong>${organizationName}</strong> on Stellar Commerce.</p><p><a href="${url}">Accept the invitation</a></p>`,
+      subject: `You've been invited to join ${organizationName} on Stellar Escrow Engine`,
+      text: `You've been invited to join ${organizationName} on Stellar Escrow Engine.\n\nAccept the invitation: ${url}`,
+      html: `<p>You've been invited to join <strong>${organizationName}</strong> on Stellar Escrow Engine.</p><p><a href="${url}">Accept the invitation</a></p>`,
     });
   }
 }

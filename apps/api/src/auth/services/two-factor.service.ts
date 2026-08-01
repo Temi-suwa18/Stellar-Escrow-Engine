@@ -5,7 +5,7 @@ import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { hashToken } from '../../common/crypto.util';
 
-const ISSUER = 'Stellar Commerce';
+const ISSUER = 'Stellar Escrow Engine';
 const RECOVERY_CODE_COUNT = 10;
 
 @Injectable()
@@ -73,5 +73,9 @@ export class TwoFactorService {
 }
 
 function generateRecoveryCode(): string {
-  return randomBytes(5).toString('hex').toUpperCase().match(/.{1,5}/g)!.join('-');
+  return randomBytes(5)
+    .toString('hex')
+    .toUpperCase()
+    .match(/.{1,5}/g)!
+    .join('-');
 }

@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { MemberRole } from '@stellar-commerce/database';
+import type { MemberRole } from '@stellar-escrow/database';
 import { PrismaService } from '../database/prisma.service';
 import { EmailService } from '../email/email.service';
 import { generateOpaqueToken, hashToken } from '../common/crypto.util';
@@ -160,7 +160,6 @@ export class OrganizationsService {
     const base = slugify(name);
     let candidate = base;
     let suffix = 0;
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const existing = await this.prisma.client.organization.findUnique({
         where: { slug: candidate },

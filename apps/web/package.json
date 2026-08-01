@@ -1,8 +1,8 @@
 {
-  "name": "@stellar-commerce/web",
+  "name": "@stellar-escrow/web",
   "version": "0.1.0",
   "private": true,
-  "description": "Stellar-Commerce-API dashboard — merchant-facing Next.js application.",
+  "description": "Stellar-Escrow-Engine dashboard — merchant-facing Next.js application.",
   "scripts": {
     "build": "next build",
     "dev": "next dev --port 3000",
@@ -38,7 +38,7 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
-    "@stellar-commerce/config": "workspace:*",
+    "@stellar-escrow/config": "workspace:*",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^22.10.5",
