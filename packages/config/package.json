@@ -1,0 +1,14 @@
+{
+  "name": "@stellar-commerce/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared TypeScript, ESLint, and Prettier configuration for all Stellar-Commerce-API workspaces.",
+  "files": [
+    "tsconfig.base.json",
+    "tsconfig.nestjs.json",
+    "tsconfig.nextjs.json"
+  ],
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}
