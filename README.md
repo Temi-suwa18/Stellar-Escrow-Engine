@@ -1,4 +1,4 @@
-# ESCRA
+# ESCRA - Stellar Escrow Engine
 
 A universal escrow protocol on Stellar — freelance work, ecommerce orders,
 rental/vehicle deposits, and logistics shipments, all through one API with
