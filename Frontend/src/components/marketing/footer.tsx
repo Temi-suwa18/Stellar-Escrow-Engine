@@ -5,16 +5,16 @@ import { Logo } from './logo';
 
 const FOOTER_LINKS = {
   Product: [
-    { label: 'Freelance', href: '#products' },
-    { label: 'Ecommerce', href: '#products' },
-    { label: 'Rentals', href: '#products' },
-    { label: 'Logistics', href: '#products' },
+    { label: 'Freelance', href: '/#products' },
+    { label: 'Ecommerce', href: '/#products' },
+    { label: 'Rentals', href: '/#products' },
+    { label: 'Logistics', href: '/#products' },
   ],
   Developers: [
     { label: 'Documentation', href: '/docs' },
     { label: 'API reference', href: '/docs' },
-    { label: 'SDKs', href: '#developers' },
-    { label: 'Webhooks', href: '#developers' },
+    { label: 'SDKs', href: '/#developers' },
+    { label: 'Webhooks', href: '/#developers' },
   ],
   Company: [
     { label: 'About', href: '/about' },

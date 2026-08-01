@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, VERSION_NEUTRAL } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
   DiskHealthIndicator,
@@ -10,8 +10,11 @@ import { RedisHealthIndicator } from './redis.health';
 import { DatabaseHealthIndicator } from './database.health';
 import { Public } from '../auth/decorators/public.decorator';
 
+// Deliberately version-neutral: Docker/Kubernetes health probes hit a fixed
+// path (see Dockerfile HEALTHCHECK, docker-compose.yml) and shouldn't need
+// updating every time the API's version bumps.
 @ApiTags('health')
-@Controller('health')
+@Controller({ path: 'health', version: VERSION_NEUTRAL })
 @Public()
 export class HealthController {
   constructor(

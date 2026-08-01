@@ -3,7 +3,7 @@
    supertest's request() typing against Nest's getHttpServer() return type is a known gap;
    scoped to this e2e test harness, not application code. */
 import { Test } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 
@@ -16,6 +16,10 @@ describe('App (e2e)', () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
+    // Mirrors main.ts's bootstrap exactly (versioning included) so this suite
+    // actually exercises the routes as they exist in production, instead of
+    // silently testing a different app shape than the one that gets deployed.
+    app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
     );
