@@ -9,15 +9,15 @@ const STEPS = [
   },
   {
     step: '02',
-    title: 'Integrate the SDK',
+    title: 'Create an escrow',
     description:
-      'Drop in the SDK for your language, create a payment or checkout session, and verify webhook events against your endpoint.',
+      'Pick a category (freelance, ecommerce, rental, logistics), define milestones if needed, and call one endpoint.',
   },
   {
     step: '03',
-    title: 'Go live on Stellar',
+    title: 'Release or refund',
     description:
-      'Switch to live-mode keys, connect a treasury wallet, and start settling directly on the Stellar network — no intermediary custody.',
+      'Funds settle directly on Stellar via Soroban — release on milestone completion, refund on dispute, no intermediary custody.',
   },
 ] as const;
 

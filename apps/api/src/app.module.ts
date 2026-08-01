@@ -7,6 +7,11 @@ import { randomUUID } from 'node:crypto';
 import { validateEnv, type EnvConfig } from './config/env.validation';
 import { HealthModule } from './health/health.module';
 import { DatabaseModule } from './database/database.module';
+import { EmailModule } from './email/email.module';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { OrganizationsModule } from './organizations/organizations.module';
+import { ApiKeysModule } from './api-keys/api-keys.module';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
@@ -48,11 +53,16 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
       },
     ]),
     DatabaseModule,
+    EmailModule,
+    AuthModule,
+    OrganizationsModule,
+    ApiKeysModule,
     HealthModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
 })
 export class AppModule implements NestModule {

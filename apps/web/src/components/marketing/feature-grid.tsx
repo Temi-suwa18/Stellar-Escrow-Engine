@@ -1,83 +1,85 @@
-import { BarChart3, FileText, Lock, Repeat, Share2, ShieldCheck, Webhook, Zap } from 'lucide-react';
+import {
+  Briefcase,
+  Car,
+  Gavel,
+  Lock,
+  Milestone,
+  ShoppingCart,
+  Truck,
+  Users,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FadeIn } from './fade-in';
 
 const FEATURES = [
   {
-    icon: Zap,
-    title: 'Hosted checkout',
-    description:
-      'Branded checkout pages for XLM, USDC, and any Stellar asset. Mobile-first, no redirects needed.',
+    icon: Briefcase,
+    title: 'Freelance',
+    description: 'Escrow project payments with milestone-based releases as work is delivered.',
   },
   {
-    icon: Repeat,
-    title: 'Subscriptions',
-    description:
-      'Monthly, weekly, or annual billing with trials, metered usage, dunning, and lifecycle webhooks.',
+    icon: ShoppingCart,
+    title: 'Ecommerce',
+    description: 'Hold buyer funds until delivery is confirmed — chargeback-proof, on-chain.',
   },
   {
-    icon: FileText,
-    title: 'Invoicing',
-    description:
-      'Draft and recurring invoices, taxes, discounts, PDF generation, and automatic payment reminders.',
+    icon: Car,
+    title: 'Rentals & vehicles',
+    description: 'Security deposits and rental payments released automatically on return.',
+  },
+  {
+    icon: Truck,
+    title: 'Logistics',
+    description: 'Shipment-linked escrow that releases on proof of delivery.',
+  },
+  {
+    icon: Milestone,
+    title: 'Milestone payments',
+    description: 'Split any deal into milestones, each independently funded and released.',
+  },
+  {
+    icon: Gavel,
+    title: 'Dispute resolution',
+    description: 'Built-in arbitrator workflow when depositor and beneficiary disagree.',
+  },
+  {
+    icon: Users,
+    title: 'Multi-signature',
+    description: 'Require multiple approvals before high-value releases go through.',
   },
   {
     icon: Lock,
-    title: 'Escrow',
-    description:
-      'Soroban-backed escrow with milestone releases, time locks, multi-sig approval, and arbitrated disputes.',
-  },
-  {
-    icon: Share2,
-    title: 'Split payments',
-    description:
-      'Automatic revenue sharing across unlimited recipients — commissions, affiliates, and vendor payouts.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Treasury',
-    description:
-      'Multi-wallet treasury with spending policies, approval workflows, and scheduled transfers.',
-  },
-  {
-    icon: Webhook,
-    title: 'Webhooks',
-    description:
-      'Signed event delivery with automatic retries for every payment, subscription, invoice, and escrow event.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Analytics',
-    description:
-      'Revenue, MRR/ARR, churn, payment success rate, and customer lifetime value — exportable anytime.',
+    title: 'Time locks',
+    description: 'Automatic release or refund once a deadline passes with no action.',
   },
 ] as const;
 
 export function FeatureGrid() {
   return (
-    <section id="features" className="border-border border-t py-24">
+    <section id="features" className="border-t border-border py-24">
       <div className="container">
         <FadeIn className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">
-            Everything a payments team needs
+            One escrow engine, every use case
           </h2>
-          <p className="text-muted-foreground mt-4 text-balance">
-            One platform instead of five vendors — built for teams accepting payments on Stellar.
+          <p className="mt-4 text-balance text-muted-foreground">
+            Stop building custom escrow logic per product line — the category just changes the
+            defaults, not the API.
           </p>
         </FadeIn>
 
         <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map(({ icon: Icon, title, description }, index) => (
             <FadeIn key={title} delay={index * 0.04}>
-              <Card className="hover:border-primary/40 group h-full transition-colors hover:shadow-md">
+              <Card className="group h-full transition-colors hover:border-primary/40 hover:shadow-md">
                 <CardHeader>
-                  <div className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground mb-1 flex h-10 w-10 items-center justify-center rounded-lg transition-colors">
+                  <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                     <Icon className="h-5 w-5" />
                   </div>
                   <CardTitle className="text-base">{title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground text-sm">{description}</p>
+                  <p className="text-sm text-muted-foreground">{description}</p>
                 </CardContent>
               </Card>
             </FadeIn>

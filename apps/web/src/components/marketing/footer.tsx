@@ -5,10 +5,10 @@ import { Logo } from './logo';
 
 const FOOTER_LINKS = {
   Product: [
-    { label: 'Checkout', href: '#products' },
-    { label: 'Subscriptions', href: '#products' },
-    { label: 'Escrow', href: '#products' },
-    { label: 'Treasury', href: '#products' },
+    { label: 'Freelance', href: '#products' },
+    { label: 'Ecommerce', href: '#products' },
+    { label: 'Rentals', href: '#products' },
+    { label: 'Logistics', href: '#products' },
   ],
   Developers: [
     { label: 'Documentation', href: '/docs' },
@@ -31,7 +31,7 @@ export function Footer() {
           <div className="flex flex-col gap-4">
             <Logo />
             <p className="text-muted-foreground max-w-xs text-sm">
-              Payment infrastructure for the Stellar network — built for Web3 and Soroban.
+              A universal escrow protocol on Stellar — built for Web3 and Soroban.
             </p>
             <div className="flex gap-3">
               <Link
@@ -73,7 +73,7 @@ export function Footer() {
         <Separator className="my-10" />
 
         <div className="text-muted-foreground flex flex-col items-center justify-between gap-4 text-sm sm:flex-row">
-          <p>© {new Date().getFullYear()} Stellar Commerce. Built for the Stellar network.</p>
+          <p>© {new Date().getFullYear()} Stellar Escrow Engine. Built for the Stellar network.</p>
           <div className="flex gap-6">
             <Link href="/privacy" className="hover:text-foreground transition-colors">
               Privacy

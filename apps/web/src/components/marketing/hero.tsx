@@ -5,27 +5,29 @@ import { Badge } from '@/components/ui/badge';
 import { CodeWindow } from './code-window';
 import { FadeIn } from './fade-in';
 
-const PAYMENT_SNIPPET = `import { StellarCommerce } from "@stellar-commerce/sdk";
+const ESCROW_SNIPPET = `import { StellarEscrow } from "@stellar-escrow/sdk";
 
-const stellar = new StellarCommerce(process.env.STELLAR_API_KEY);
+const escrow = new StellarEscrow(process.env.ESCROW_API_KEY);
 
-// Create a payment
-const payment = await stellar.payments.create({
-  amount: 100,
+// One universal API — any use case
+const deal = await escrow.create({
+  category: "freelance", // ecommerce | rental | logistics
+  amount: 500,
   asset: "USDC",
-  description: "Premium Subscription",
+  depositor: "GABC...123",
+  beneficiary: "GXYZ...789",
+  milestones: [
+    { label: "Design draft", amount: 200 },
+    { label: "Final delivery", amount: 300 },
+  ],
 });
 
-// Or a hosted checkout session
-const session = await stellar.checkout.sessions.create({
-  lineItems: [{ price: "price_premium_monthly", quantity: 1 }],
-  successUrl: "https://example.com/success",
-});`;
+await escrow.release(deal.id, { milestone: 0 });`;
 
 const STATS = [
-  { value: '3-5s', label: 'Average settlement time on Stellar' },
-  { value: '7', label: 'Official SDKs — TS, Python, Go, Rust, PHP, Java' },
-  { value: '0', label: 'Custody of merchant funds held by us' },
+  { value: '4', label: 'Built-in categories: freelance, ecommerce, rental, logistics' },
+  { value: '1', label: 'Universal API — no per-industry integration' },
+  { value: '0', label: 'Custody of funds held by us' },
 ] as const;
 
 export function Hero() {
@@ -43,20 +45,22 @@ export function Hero() {
       <div className="container grid gap-16 pb-24 pt-20 lg:grid-cols-2 lg:items-center lg:pb-32 lg:pt-28">
         <FadeIn className="flex flex-col items-start gap-6">
           <Badge variant="secondary" className="gap-1.5 py-1.5 pl-2 pr-3">
-            <Sparkles className="text-primary h-3.5 w-3.5" />
-            Built for Web3 · Powered by Soroban
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            Built on Soroban · Non-custodial
           </Badge>
 
           <h1 className="text-balance text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-            Payment infrastructure for the{' '}
+            A universal{' '}
             <span className="bg-gradient-to-br from-indigo-500 via-violet-500 to-cyan-400 bg-clip-text text-transparent">
-              Stellar network
-            </span>
+              escrow protocol
+            </span>{' '}
+            for Stellar
           </h1>
 
-          <p className="text-muted-foreground max-w-xl text-balance text-lg">
-            Checkout, subscriptions, invoicing, escrow, and treasury — one API, a few lines of code,
-            and non-custodial settlement on Stellar and Soroban.
+          <p className="max-w-xl text-balance text-lg text-muted-foreground">
+            One API for freelance work, ecommerce orders, vehicle/rental deposits, and logistics
+            shipments — with milestone releases, disputes, and multi-sig approval built in. Apps
+            just call the API.
           </p>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -70,19 +74,19 @@ export function Hero() {
             </Button>
           </div>
 
-          <dl className="border-border mt-4 grid w-full grid-cols-3 gap-6 border-t pt-6">
+          <dl className="mt-4 grid w-full grid-cols-3 gap-6 border-t border-border pt-6">
             {STATS.map((stat) => (
               <div key={stat.label} className="flex flex-col gap-1">
                 <dt className="sr-only">{stat.label}</dt>
                 <dd className="text-2xl font-bold tracking-tight">{stat.value}</dd>
-                <dd className="text-muted-foreground text-xs">{stat.label}</dd>
+                <dd className="text-xs text-muted-foreground">{stat.label}</dd>
               </div>
             ))}
           </dl>
         </FadeIn>
 
         <FadeIn delay={0.15}>
-          <CodeWindow filename="create-payment.ts" code={PAYMENT_SNIPPET} />
+          <CodeWindow filename="create-escrow.ts" code={ESCROW_SNIPPET} />
         </FadeIn>
       </div>
     </section>

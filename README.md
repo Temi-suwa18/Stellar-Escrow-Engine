@@ -1,8 +1,9 @@
-# Stellar Commerce API
+# Stellar Escrow Engine
 
-Payment infrastructure for the Stellar network — hosted checkout, payment links,
-subscriptions, invoicing, escrow, split payments, treasury management, analytics,
-webhooks, and developer tooling. Built for Web3 and Soroban, designed like Stripe.
+A universal escrow protocol on Stellar — freelance work, ecommerce orders,
+rental/vehicle deposits, and logistics shipments, all through one API with
+milestone releases, disputes, and multi-sig approval built in. Apps just call
+the API.
 
 > **Status:** actively under construction, built module by module. See
 > [Build Progress](#build-progress) below for what's implemented today versus
@@ -93,28 +94,26 @@ placeholders — before moving to the next.
       Schema validated via `prisma generate` + a real generated migration
       (`prisma migrate diff`); live `migrate dev` against Postgres still
       needs to be run in an environment with a database available.
-- [ ] **Module 3 — Authentication & authorization.** Email/password, Google
-      OAuth, GitHub OAuth, magic link, 2FA, session management, API tokens,
+- [~] **Module 3 — Authentication & authorization.** Email/password, Google
+      OAuth, GitHub OAuth, magic link, 2FA, session management, API keys,
       organization invitations, multi-tenant orgs, RBAC (Owner, Admin,
-      Developer, Finance, Viewer).
-- [ ] Dashboard shell & navigation
-- [ ] Payment API (create/retrieve/list/capture/cancel/refund, idempotency)
-- [ ] Hosted checkout
-- [ ] Payment links
-- [ ] Invoicing
-- [ ] Subscription billing
-- [ ] Webhooks (delivery, retries, signature verification, event log)
-- [ ] Escrow (Soroban) + dispute workflow
-- [ ] Marketplace split payments
-- [ ] Treasury management
-- [ ] Customer management
-- [ ] Product catalog
-- [ ] Analytics
-- [ ] Developer portal & SDKs (TypeScript, Python, Go, Rust, PHP, Java)
-- [ ] Admin console
+      Developer, Finance, Viewer). Backend implemented; needs a live-DB test
+      pass and frontend wiring.
+- [ ] Escrow API (create/fund/release/refund/dispute, milestones) — the core
+      product surface for freelance, ecommerce, rental, and logistics
+- [ ] Escrow dashboard (view deals, milestones, disputes)
+- [ ] Webhooks (escrow.created/funded/released/disputed, retries, signing)
+- [ ] Soroban escrow + milestone contracts
+- [ ] Developer portal & SDKs (TypeScript first, others after)
 - [ ] Security hardening pass (rate limiting, CSRF/XSS/SQLi defenses, secret encryption, audit logging)
 - [ ] End-to-end test suite (Playwright) + smart contract tests
 - [ ] Production deployment (Kubernetes-ready manifests, Terraform)
+
+> **Note:** this project pivoted from a broad Stripe-style commerce platform
+> (checkout/subscriptions/invoicing/treasury) to a focused escrow protocol.
+> The Module 2 database schema still contains those broader models — they're
+> unused by the current product direction and will be trimmed as the escrow
+> API solidifies, rather than rewritten under time pressure right now.
 
 ## License
 

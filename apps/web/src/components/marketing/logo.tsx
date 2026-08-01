@@ -11,15 +11,10 @@ export function Logo({ className }: { className?: string }) {
             strokeWidth="1.6"
             strokeLinejoin="round"
           />
-          <path
-            d="M12 12 3 7m9 5 9-5m-9 5v10"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinejoin="round"
-          />
+          <path d="M12 12 3 7m9 5 9-5m-9 5v10" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
         </svg>
       </span>
-      <span className="text-lg font-semibold tracking-tight">Stellar Commerce</span>
+      <span className="text-lg font-semibold tracking-tight">Stellar Escrow</span>
     </span>
   );
 }

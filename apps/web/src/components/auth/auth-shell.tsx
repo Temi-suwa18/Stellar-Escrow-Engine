@@ -4,7 +4,7 @@ import { Logo } from '@/components/marketing/logo';
 
 const PANEL_POINTS = [
   'Non-custodial settlement on Stellar',
-  'Checkout, subscriptions, escrow, and treasury in one API',
+  'One API for freelance, ecommerce, rental, and logistics escrow',
   'Test-mode keys available immediately, no approval wait',
 ] as const;
 
@@ -37,7 +37,7 @@ export function AuthShell({
 
         <div className="relative z-10 flex flex-col gap-6">
           <p className="text-balance text-3xl font-semibold leading-tight tracking-tight">
-            Payment infrastructure for the Stellar network.
+            A universal escrow protocol for Stellar.
           </p>
           <ul className="flex flex-col gap-3">
             {PANEL_POINTS.map((point) => (
@@ -50,7 +50,7 @@ export function AuthShell({
         </div>
 
         <p className="relative z-10 text-xs text-white/40">
-          © {new Date().getFullYear()} Stellar Commerce
+          © {new Date().getFullYear()} Stellar Escrow Engine
         </p>
       </div>
 

@@ -7,100 +7,111 @@ import { FadeIn } from './fade-in';
 
 const TABS = [
   {
-    value: 'checkout',
-    label: 'Checkout',
-    filename: 'checkout.ts',
-    code: `const session = await stellar.checkout.sessions.create({
-  lineItems: [
-    { price: "price_pro_plan", quantity: 1 },
-  ],
-  successUrl: "https://acme.com/success",
-  cancelUrl: "https://acme.com/cancel",
-  allowedAssets: ["USDC", "XLM"],
-});
-
-// Redirect the customer to session.url`,
-    points: [
-      'XLM, USDC, and custom Stellar assets',
-      'Custom branding, discount codes, and tax',
-      'QR code for wallet-to-wallet payment',
-    ],
-  },
-  {
-    value: 'subscriptions',
-    label: 'Subscriptions',
-    filename: 'subscriptions.ts',
-    code: `const subscription = await stellar.subscriptions.create({
-  customer: "cus_8xJ2k",
-  price: "price_pro_monthly",
-  trialDays: 14,
-});
-
-await stellar.subscriptions.pause(subscription.id);
-await stellar.subscriptions.resume(subscription.id);`,
-    points: [
-      'Monthly, weekly, annual, and metered billing',
-      'Trials, pause/resume, upgrade/downgrade',
-      'Automatic retries on failed payments',
-    ],
-  },
-  {
-    value: 'escrow',
-    label: 'Escrow',
-    filename: 'escrow.ts',
-    code: `const escrow = await stellar.escrow.create({
-  amount: 5000,
+    value: 'freelance',
+    label: 'Freelance',
+    filename: 'freelance.ts',
+    code: `const deal = await escrow.create({
+  category: "freelance",
+  amount: 1500,
   asset: "USDC",
+  depositor: client.wallet,
+  beneficiary: freelancer.wallet,
   milestones: [
-    { description: "Design delivered", amount: 2000 },
-    { description: "Final delivery", amount: 3000 },
+    { label: "Wireframes", amount: 500 },
+    { label: "Final build", amount: 1000 },
   ],
-  arbitrator: "GARB...XYZ",
 });
 
-await stellar.escrow.releaseMilestone(escrow.id, 0);`,
+await escrow.releaseMilestone(deal.id, 0);`,
     points: [
-      'Milestone-based releases on Soroban',
-      'Multi-signature approval and time locks',
-      'Built-in arbitrated dispute workflow',
+      'Fund the whole project up front, pay out per milestone',
+      'Freelancer sees funds are secured before starting work',
+      'Dispute a milestone without unwinding the whole deal',
     ],
   },
   {
-    value: 'treasury',
-    label: 'Treasury',
-    filename: 'treasury.ts',
-    code: `const transfer = await stellar.treasury.transfers.schedule({
-  fromWallet: "wal_operating",
-  toWallet: "wal_payroll",
-  amount: 12000,
+    value: 'ecommerce',
+    label: 'Ecommerce',
+    filename: 'ecommerce.ts',
+    code: `const order = await escrow.create({
+  category: "ecommerce",
+  amount: 89.99,
   asset: "USDC",
-  requiresApproval: true,
-  runAt: "2026-08-01T00:00:00Z",
+  depositor: buyer.wallet,
+  beneficiary: seller.wallet,
+  autoReleaseAfterDays: 14,
+});
+
+// Buyer confirms receipt, or it auto-releases after 14 days
+await escrow.release(order.id);`,
+    points: [
+      'Buyer funds are held until delivery is confirmed',
+      'Automatic release after a configurable window',
+      'No chargebacks — funds move on-chain once released',
+    ],
+  },
+  {
+    value: 'rental',
+    label: 'Rentals',
+    filename: 'rental.ts',
+    code: `const deposit = await escrow.create({
+  category: "rental",
+  amount: 400,
+  asset: "USDC",
+  depositor: renter.wallet,
+  beneficiary: owner.wallet,
+  timeLockUntil: returnDate,
+});
+
+// On clean return:
+await escrow.refund(deposit.id);
+// On damage claim:
+await escrow.dispute(deposit.id, { reason: "Damage reported" });`,
+    points: [
+      'Security deposits held for the rental period',
+      'Time-locked to the expected return date',
+      'Refund on clean return, dispute on damage claims',
+    ],
+  },
+  {
+    value: 'logistics',
+    label: 'Logistics',
+    filename: 'logistics.ts',
+    code: `const shipment = await escrow.create({
+  category: "logistics",
+  amount: 2200,
+  asset: "USDC",
+  depositor: shipper.wallet,
+  beneficiary: carrier.wallet,
+  milestones: [
+    { label: "Pickup confirmed", amount: 700 },
+    { label: "Proof of delivery", amount: 1500 },
+  ],
 });`,
     points: [
-      'Multi-wallet treasury with spending policies',
-      'Approval workflows for scheduled transfers',
-      'Cash-flow analytics across every wallet',
+      'Pay carriers per checkpoint, not all-or-nothing',
+      'Proof-of-delivery triggers the final release',
+      'Multi-leg shipments map to multiple milestones',
     ],
   },
 ] as const;
 
 export function CodeShowcase() {
   return (
-    <section id="products" className="border-border bg-muted/30 border-t py-24">
+    <section id="products" className="border-t border-border bg-muted/30 py-24">
       <div className="container">
         <FadeIn className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl">
-            One API, every product
+            Same API. Different deal.
           </h2>
-          <p className="text-muted-foreground mt-4 text-balance">
-            The same client, the same auth, the same webhooks — across checkout, subscriptions,
-            escrow, and treasury.
+          <p className="mt-4 text-balance text-muted-foreground">
+            The category changes what defaults apply — the integration you write doesn&apos;t
+            change.
           </p>
         </FadeIn>
 
         <FadeIn delay={0.1} className="mx-auto mt-14 max-w-5xl">
-          <Tabs defaultValue="checkout">
+          <Tabs defaultValue="freelance">
             <TabsList className="mx-auto flex h-auto w-fit flex-wrap justify-center gap-1">
               {TABS.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value}>
@@ -115,7 +126,7 @@ export function CodeShowcase() {
                   <ul className="flex flex-col gap-3 lg:order-2">
                     {tab.points.map((point) => (
                       <li key={point} className="flex items-start gap-2.5 text-sm">
-                        <Check className="text-primary mt-0.5 h-4 w-4 shrink-0" />
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                         <span>{point}</span>
                       </li>
                     ))}

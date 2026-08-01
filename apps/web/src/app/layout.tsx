@@ -7,11 +7,11 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
   title: {
-    default: 'Stellar Commerce',
-    template: '%s · Stellar Commerce',
+    default: 'Stellar Escrow Engine',
+    template: '%s · Stellar Escrow Engine',
   },
   description:
-    'Payment infrastructure for the Stellar network — hosted checkout, subscriptions, invoicing, escrow, and treasury management.',
+    'A universal escrow protocol on Stellar — freelance, ecommerce, rentals/vehicles, logistics, and milestone payments. Apps just call the API.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
