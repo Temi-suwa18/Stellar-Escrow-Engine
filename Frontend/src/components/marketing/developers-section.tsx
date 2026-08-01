@@ -75,9 +75,13 @@ export function DevelopersSection() {
               </span>
             ))}
           </div>
-          <Button variant="outline" className="uppercase tracking-widest" asChild>
+          <Button
+            variant="outline"
+            className="h-auto whitespace-normal text-center uppercase tracking-widest"
+            asChild
+          >
             <Link href="/docs">
-              Explore the developer portal <ArrowRight className="ml-1.5 h-4 w-4" />
+              Explore the developer portal <ArrowRight className="ml-1.5 inline h-4 w-4 shrink-0" />
             </Link>
           </Button>
         </FadeIn>

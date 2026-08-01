@@ -131,7 +131,7 @@ export function CodeShowcase() {
             {TABS.map((tab) => (
               <TabsContent key={tab.value} value={tab.value} className="mt-8">
                 <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
-                  <ul className="flex flex-col gap-3 lg:order-2">
+                  <ul className="flex min-w-0 flex-col gap-3 lg:order-2">
                     {tab.points.map((point) => (
                       <li key={point} className="flex items-start gap-2.5 text-sm">
                         <Check className="text-primary mt-0.5 h-4 w-4 shrink-0" />
@@ -139,7 +139,7 @@ export function CodeShowcase() {
                       </li>
                     ))}
                   </ul>
-                  <CodeWindow filename={tab.filename} code={tab.code} className="lg:order-1" />
+                  <CodeWindow filename={tab.filename} code={tab.code} className="min-w-0 lg:order-1" />
                 </div>
               </TabsContent>
             ))}

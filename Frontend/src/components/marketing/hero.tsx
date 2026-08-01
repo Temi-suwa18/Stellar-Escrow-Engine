@@ -43,7 +43,7 @@ export function Hero() {
       />
 
       <div className="container grid gap-16 pb-24 pt-20 lg:grid-cols-2 lg:items-center lg:pb-32 lg:pt-28">
-        <FadeIn className="flex flex-col items-start gap-6">
+        <FadeIn className="flex min-w-0 flex-col items-start gap-6">
           <span className="text-primary flex items-center gap-1.5 text-xs uppercase tracking-widest">
             <span className="bg-primary h-1.5 w-1.5 rounded-full" />
             ESCRA / Universal escrow protocol
@@ -85,12 +85,12 @@ export function Hero() {
           </dl>
         </FadeIn>
 
-        <FadeIn delay={0.15} className="hidden lg:block">
+        <FadeIn delay={0.15} className="hidden min-w-0 lg:block">
           <BracketFrame className="mx-6 my-6">
             <CodeWindow filename="create-escrow.ts" code={ESCROW_SNIPPET} />
           </BracketFrame>
         </FadeIn>
-        <FadeIn delay={0.15} className="lg:hidden">
+        <FadeIn delay={0.15} className="min-w-0 lg:hidden">
           <CodeWindow filename="create-escrow.ts" code={ESCROW_SNIPPET} />
         </FadeIn>
       </div>

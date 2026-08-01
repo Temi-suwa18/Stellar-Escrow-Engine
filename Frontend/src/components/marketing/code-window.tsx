@@ -65,7 +65,12 @@ export function CodeWindow({
   return (
     <div
       className={cn(
-        'border-border overflow-hidden rounded-md border bg-[#0b0f19] shadow-2xl shadow-black/10 dark:shadow-black/40',
+        // min-w-0 lets this shrink below its code content's intrinsic width
+        // when it's a flex/grid item (the default min-width:auto would
+        // otherwise force the item — and everything sharing its track —
+        // wider than the viewport instead of letting the `pre` below
+        // scroll horizontally as intended.
+        'border-border min-w-0 overflow-hidden rounded-md border bg-[#0b0f19] shadow-2xl shadow-black/10 dark:shadow-black/40',
         className,
       )}
     >
