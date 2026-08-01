@@ -49,9 +49,7 @@ export function AuthShell({
           </ul>
         </div>
 
-        <p className="relative z-10 text-xs text-white/40">
-          © {new Date().getFullYear()} Stellar Escrow Engine
-        </p>
+        <p className="relative z-10 text-xs text-white/40">© {new Date().getFullYear()} ESCRA</p>
       </div>
 
       <div className="flex flex-col items-center justify-center gap-8 px-6 py-16">

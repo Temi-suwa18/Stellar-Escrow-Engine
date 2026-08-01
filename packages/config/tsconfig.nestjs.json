@@ -9,6 +9,8 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "outDir": "./dist",
-    "baseUrl": "./"
+    "baseUrl": "./",
+    "declaration": false,
+    "declarationMap": false
   }
 }

@@ -11,7 +11,7 @@ export default function LoginPage() {
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Sign in to your Stellar Escrow Engine dashboard."
+      subtitle="Sign in to your ESCRA dashboard."
       footer={
         <>
           Don&apos;t have an account?{' '}

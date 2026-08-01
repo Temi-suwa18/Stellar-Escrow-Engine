@@ -73,7 +73,7 @@ export function Footer() {
         <Separator className="my-10" />
 
         <div className="text-muted-foreground flex flex-col items-center justify-between gap-4 text-sm sm:flex-row">
-          <p>© {new Date().getFullYear()} Stellar Escrow Engine. Built for the Stellar network.</p>
+          <p>© {new Date().getFullYear()} ESCRA. Built for the Stellar network.</p>
           <div className="flex gap-6">
             <Link href="/privacy" className="hover:text-foreground transition-colors">
               Privacy

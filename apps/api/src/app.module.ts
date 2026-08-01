@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
+import { EscrowsModule } from './escrows/escrows.module';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
@@ -57,6 +58,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     AuthModule,
     OrganizationsModule,
     ApiKeysModule,
+    EscrowsModule,
     HealthModule,
   ],
   providers: [

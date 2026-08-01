@@ -7,8 +7,8 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
   title: {
-    default: 'Stellar Escrow Engine',
-    template: '%s · Stellar Escrow Engine',
+    default: 'ESCRA',
+    template: '%s · ESCRA',
   },
   description:
     'A universal escrow protocol on Stellar — freelance, ecommerce, rentals/vehicles, logistics, and milestone payments. Apps just call the API.',

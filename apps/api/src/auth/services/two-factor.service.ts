@@ -5,7 +5,7 @@ import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { hashToken } from '../../common/crypto.util';
 
-const ISSUER = 'Stellar Escrow Engine';
+const ISSUER = 'ESCRA';
 const RECOVERY_CODE_COUNT = 10;
 
 @Injectable()

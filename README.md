@@ -1,4 +1,4 @@
-# Stellar Escrow Engine
+# ESCRA
 
 A universal escrow protocol on Stellar — freelance work, ecommerce orders,
 rental/vehicle deposits, and logistics shipments, all through one API with
@@ -99,8 +99,17 @@ placeholders — before moving to the next.
   organization invitations, multi-tenant orgs, RBAC (Owner, Admin,
   Developer, Finance, Viewer). Backend implemented; needs a live-DB test
   pass and frontend wiring.
-- [ ] Escrow API (create/fund/release/refund/dispute, milestones) — the core
-      product surface for freelance, ecommerce, rental, and logistics
+- [x] **Escrow API.** Create (with optional milestones, time locks, or an
+      ecommerce-style auto-release window), fund, release (full or
+      per-milestone, auto-completing once every milestone is released),
+      refund, dispute (requires an arbitrator wallet), and resolve. One
+      category enum (freelance/ecommerce/rental/logistics) drives defaults;
+      the endpoints are identical across all four. Authenticated with
+      `X-Api-Key` — "apps just call the API" is the actual auth model here,
+      not a JWT dashboard session. 17 unit tests cover the state machine.
+      Not yet wired to real Soroban contracts — `fund` currently just
+      records a caller-supplied tx hash, and `autoReleaseAt` is stored but
+      nothing executes it yet (no background scheduler exists).
 - [ ] Escrow dashboard (view deals, milestones, disputes)
 - [ ] Webhooks (escrow.created/funded/released/disputed, retries, signing)
 - [ ] Soroban escrow + milestone contracts

@@ -603,26 +603,42 @@ enum EscrowStatus {
   CANCELED
 }
 
+/// Determines which defaults/workflow a deal follows (e.g. ecommerce gets an
+/// auto-release window, rentals get a time lock) — the API surface is the
+/// same across categories, only the defaults differ.
+enum EscrowCategory {
+  FREELANCE
+  ECOMMERCE
+  RENTAL
+  LOGISTICS
+}
+
 model Escrow {
-  id                String       @id @default(cuid())
+  id                String         @id @default(cuid())
   organizationId    String
-  contractAddress   String
+  category          EscrowCategory
+  /// Set once the deal is actually deployed/funded on-chain; null while PENDING.
+  contractAddress   String?
   depositorWallet   String
   beneficiaryWallet String
   arbitratorWallet  String?
-  amount            Decimal      @db.Decimal(20, 7)
+  amount            Decimal        @db.Decimal(20, 7)
   asset             String
-  status            EscrowStatus @default(PENDING)
+  status            EscrowStatus   @default(PENDING)
   timeLockUntil     DateTime?
+  /// Ecommerce-style deals: release automatically if not confirmed/disputed by this time.
+  autoReleaseAt     DateTime?
+  fundedTxHash      String?
   disputeReason     String?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   milestones   Milestone[]
 
   @@index([organizationId, status])
   @@index([contractAddress])
+  @@index([status, autoReleaseAt])
   @@map("escrows")
 }
 
