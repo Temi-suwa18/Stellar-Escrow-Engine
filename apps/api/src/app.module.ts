@@ -6,6 +6,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { randomUUID } from 'node:crypto';
 import { validateEnv, type EnvConfig } from './config/env.validation';
 import { HealthModule } from './health/health.module';
+import { DatabaseModule } from './database/database.module';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
@@ -46,6 +47,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
         limit: 120,
       },
     ]),
+    DatabaseModule,
     HealthModule,
   ],
   providers: [

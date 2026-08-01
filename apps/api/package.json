@@ -24,6 +24,7 @@
     "@nestjs/swagger": "^8.1.0",
     "@nestjs/terminus": "^10.2.3",
     "@nestjs/throttler": "^6.3.0",
+    "@stellar-commerce/database": "workspace:*",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "compression": "^1.7.5",

@@ -1,0 +1,899 @@
+// Stellar Commerce API — primary datastore schema.
+//
+// Conventions used throughout this file:
+// - Ids are cuid() strings, not auto-increment ints — safe to generate
+//   client-side, don't leak sequential counts, and avoid enumeration.
+// - Money is Decimal(20, 7): Stellar amounts carry up to 7 decimal places
+//   of precision, so a 2-decimal-cents Int (the usual Stripe-style choice)
+//   would silently truncate XLM/USDC amounts. 20 total digits leaves 13
+//   integer digits, far beyond any realistic balance.
+// - `asset` fields are free-form strings following Stellar SDK convention:
+//   "native" for XLM, or "CODE:ISSUER" for issued assets (e.g. USDC on a
+//   given issuer). Assets are per-organization configuration, not a fixed
+//   enum, since merchants choose which issuers they trust.
+// - Every tenant-scoped model carries `organizationId` directly (rather
+//   than only via a relation) so it can be indexed and filtered on its own
+//   — every query in this system is scoped to one organization.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Identity & authentication
+// ---------------------------------------------------------------------------
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  name             String?
+  avatarUrl        String?
+  passwordHash     String? // null for users who only ever used OAuth/magic link
+  emailVerifiedAt  DateTime?
+  twoFactorEnabled Boolean   @default(false)
+  twoFactorSecret  String? // encrypted at the application layer before storage
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  oauthAccounts          OAuthAccount[]
+  sessions               Session[]
+  magicLinkTokens        MagicLinkToken[]
+  twoFactorRecoveryCodes TwoFactorRecoveryCode[]
+  organizationMembers    OrganizationMember[]
+  sentInvitations        OrganizationInvitation[] @relation("InvitationSender")
+  createdApiKeys         ApiKey[]
+  auditLogEntries        AuditLog[]
+  notifications          Notification[]
+  approvals              TreasuryApproval[]
+
+  @@index([email])
+  @@map("users")
+}
+
+enum OAuthProvider {
+  GOOGLE
+  GITHUB
+}
+
+/// Linked OAuth identity for a user. A user may have both a password and one
+/// or more linked providers simultaneously.
+model OAuthAccount {
+  id                String        @id @default(cuid())
+  userId            String
+  provider          OAuthProvider
+  providerAccountId String
+  accessToken       String? // encrypted at the application layer
+  refreshToken      String? // encrypted at the application layer
+  expiresAt         DateTime?
+  createdAt         DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("oauth_accounts")
+}
+
+/// A signed-in session (web dashboard). The session token itself is never
+/// stored — only a hash of it, so a database read can't be used to forge
+/// a session cookie.
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  userAgent  String?
+  ipAddress  String?
+  lastUsedAt DateTime  @default(now())
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+/// One-time magic-link sign-in token. Stored hashed, single-use, short-lived.
+model MagicLinkToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("magic_link_tokens")
+}
+
+/// Single-use backup codes issued when a user enables 2FA.
+model TwoFactorRecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("two_factor_recovery_codes")
+}
+
+// ---------------------------------------------------------------------------
+// Organizations (multi-tenancy) & RBAC
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  logoUrl         String?
+  defaultCurrency String   @default("USD")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  members           OrganizationMember[]
+  invitations       OrganizationInvitation[]
+  apiKeys           ApiKey[]
+  wallets           Wallet[]
+  customers         Customer[]
+  products          Product[]
+  prices            Price[]
+  payments          Payment[]
+  transactions      Transaction[]
+  invoices          Invoice[]
+  subscriptions     Subscription[]
+  escrows           Escrow[]
+  splitPayments     SplitPayment[]
+  treasuryTransfers TreasuryTransfer[]
+  webhookEndpoints  WebhookEndpoint[]
+  webhookEvents     WebhookEvent[]
+  auditLogEntries   AuditLog[]
+  notifications     Notification[]
+  dailyMetrics      DailyOrgMetrics[]
+  settings          OrganizationSettings?
+
+  @@index([slug])
+  @@map("organizations")
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  DEVELOPER
+  FINANCE
+  VIEWER
+}
+
+/// Membership + role of a user within an organization. This doubles as the
+/// "team roster" shown in Team Management — there's no separate Team model
+/// since every resource in this schema is already scoped to one organization.
+model OrganizationMember {
+  id             String     @id @default(cuid())
+  organizationId String
+  userId         String
+  role           MemberRole
+  joinedAt       DateTime   @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+model OrganizationInvitation {
+  id              String           @id @default(cuid())
+  organizationId  String
+  email           String
+  role            MemberRole
+  tokenHash       String           @unique
+  status          InvitationStatus @default(PENDING)
+  invitedByUserId String
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  createdAt       DateTime         @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy    User         @relation("InvitationSender", fields: [invitedByUserId], references: [id])
+
+  @@unique([organizationId, email, status])
+  @@index([organizationId])
+  @@map("organization_invitations")
+}
+
+enum ApiKeyMode {
+  TEST
+  LIVE
+}
+
+/// API keys authenticate programmatic access. Only a bcrypt/argon2 hash and
+/// a display prefix (e.g. "sk_live_4eC3...") are stored — the full secret is
+/// shown to the user exactly once, at creation time.
+model ApiKey {
+  id              String     @id @default(cuid())
+  organizationId  String
+  name            String
+  keyPrefix       String
+  hashedKey       String     @unique
+  mode            ApiKeyMode
+  scopes          String[]
+  lastUsedAt      DateTime?
+  revokedAt       DateTime?
+  createdByUserId String
+  createdAt       DateTime   @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation(fields: [createdByUserId], references: [id])
+
+  @@index([organizationId])
+  @@map("api_keys")
+}
+
+// ---------------------------------------------------------------------------
+// Wallets (Stellar accounts used for treasury, payouts, escrow signing)
+// ---------------------------------------------------------------------------
+
+enum StellarNetwork {
+  TESTNET
+  MAINNET
+}
+
+enum WalletPurpose {
+  OPERATING
+  TREASURY
+  ESCROW
+  PAYOUT
+}
+
+model Wallet {
+  id               String         @id @default(cuid())
+  organizationId   String
+  label            String
+  stellarPublicKey String
+  network          StellarNetwork @default(TESTNET)
+  purpose          WalletPurpose
+  isDefault        Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+
+  organization  Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transfersFrom TreasuryTransfer[] @relation("TransferSource")
+  transfersTo   TreasuryTransfer[] @relation("TransferDestination")
+
+  @@unique([organizationId, stellarPublicKey])
+  @@index([organizationId])
+  @@map("wallets")
+}
+
+// ---------------------------------------------------------------------------
+// Customers
+// ---------------------------------------------------------------------------
+
+model Customer {
+  id             String   @id @default(cuid())
+  organizationId String
+  email          String
+  name           String?
+  phone          String?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payments      Payment[]
+  invoices      Invoice[]
+  subscriptions Subscription[]
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
+  @@map("customers")
+}
+
+// ---------------------------------------------------------------------------
+// Product catalog
+// ---------------------------------------------------------------------------
+
+enum ProductType {
+  ONE_TIME
+  RECURRING
+}
+
+model Product {
+  id             String      @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  type           ProductType
+  imageUrl       String?
+  active         Boolean     @default(true)
+  metadata       Json        @default("{}")
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  prices       Price[]
+
+  @@index([organizationId])
+  @@map("products")
+}
+
+enum BillingInterval {
+  DAY
+  WEEK
+  MONTH
+  YEAR
+}
+
+enum UsageType {
+  LICENSED
+  METERED
+}
+
+/// A purchasable price point for a product. Covers one-time pricing,
+/// recurring/subscription pricing, and metered/usage-based pricing — Stripe
+/// deprecated the separate "Plan" concept in favor of this same unification,
+/// which this schema follows rather than modeling Price and Plan twice.
+model Price {
+  id                     String           @id @default(cuid())
+  organizationId         String
+  productId              String
+  unitAmount             Decimal          @db.Decimal(20, 7)
+  asset                  String
+  active                 Boolean          @default(true)
+  recurringInterval      BillingInterval?
+  recurringIntervalCount Int?
+  usageType              UsageType?
+  createdAt              DateTime         @default(now())
+
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  subscriptions Subscription[]
+
+  @@index([organizationId])
+  @@index([productId])
+  @@map("prices")
+}
+
+// ---------------------------------------------------------------------------
+// Payments, on-chain transactions, and refunds
+// ---------------------------------------------------------------------------
+
+enum PaymentStatus {
+  REQUIRES_PAYMENT_METHOD
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  organizationId String
+  customerId     String?
+  amount         Decimal       @db.Decimal(20, 7)
+  asset          String
+  status         PaymentStatus @default(REQUIRES_PAYMENT_METHOD)
+  description    String?
+  notes          String?
+  metadata       Json          @default("{}")
+  idempotencyKey String?
+  stellarTxHash  String?
+  capturedAt     DateTime?
+  canceledAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer      Customer?      @relation(fields: [customerId], references: [id])
+  refunds       Refund[]
+  transactions  Transaction[]
+  splitPayments SplitPayment[]
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, status])
+  @@index([customerId])
+  @@map("payments")
+}
+
+enum TransactionType {
+  PAYMENT
+  REFUND
+  PAYOUT
+  TRANSFER
+  FEE
+  ESCROW_DEPOSIT
+  ESCROW_RELEASE
+}
+
+enum TransactionStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+/// The ledger of actual on-chain movements. A Payment is the API-level
+/// object a merchant reasons about; a Transaction is the settlement record
+/// backing it — one Payment can have several (e.g. a partial refund adds a
+/// second Transaction without mutating the original).
+model Transaction {
+  id             String            @id @default(cuid())
+  organizationId String
+  paymentId      String?
+  type           TransactionType
+  status         TransactionStatus @default(PENDING)
+  amount         Decimal           @db.Decimal(20, 7)
+  asset          String
+  stellarTxHash  String?
+  ledgerSequence Int?
+  createdAt      DateTime          @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payment      Payment?     @relation(fields: [paymentId], references: [id])
+
+  @@index([organizationId, type])
+  @@index([paymentId])
+  @@index([stellarTxHash])
+  @@map("transactions")
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+model Refund {
+  id             String       @id @default(cuid())
+  organizationId String
+  paymentId      String
+  amount         Decimal      @db.Decimal(20, 7)
+  reason         String?
+  status         RefundStatus @default(PENDING)
+  stellarTxHash  String?
+  createdAt      DateTime     @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([paymentId])
+  @@map("refunds")
+}
+
+// ---------------------------------------------------------------------------
+// Invoicing
+// ---------------------------------------------------------------------------
+
+enum InvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  UNCOLLECTIBLE
+}
+
+model Invoice {
+  id                 String           @id @default(cuid())
+  organizationId     String
+  customerId         String
+  number             String
+  status             InvoiceStatus    @default(DRAFT)
+  currency           String
+  subtotal           Decimal          @db.Decimal(20, 7)
+  taxAmount          Decimal          @default(0) @db.Decimal(20, 7)
+  discountAmount     Decimal          @default(0) @db.Decimal(20, 7)
+  total              Decimal          @db.Decimal(20, 7)
+  dueDate            DateTime?
+  paidAt             DateTime?
+  pdfUrl             String?
+  isRecurring        Boolean          @default(false)
+  recurringInterval  BillingInterval?
+  lastReminderSentAt DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  items        InvoiceItem[]
+
+  @@unique([organizationId, number])
+  @@index([organizationId, status])
+  @@index([customerId])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Int     @default(1)
+  unitAmount  Decimal @db.Decimal(20, 7)
+  amount      Decimal @db.Decimal(20, 7)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+// ---------------------------------------------------------------------------
+// Subscriptions
+// ---------------------------------------------------------------------------
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  PAUSED
+  CANCELED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  organizationId     String
+  customerId         String
+  priceId            String
+  status             SubscriptionStatus @default(INCOMPLETE)
+  quantity           Int                @default(1)
+  trialEndsAt        DateTime?
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean            @default(false)
+  canceledAt         DateTime?
+  pausedAt           DateTime?
+  failedPaymentCount Int                @default(0)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  price        Price         @relation(fields: [priceId], references: [id])
+  usageRecords UsageRecord[]
+
+  @@index([organizationId, status])
+  @@index([customerId])
+  @@map("subscriptions")
+}
+
+/// A single reported usage quantity for a metered-billing subscription
+/// (e.g. "37 API calls on 2026-08-01"), summed at invoicing time.
+model UsageRecord {
+  id             String   @id @default(cuid())
+  subscriptionId String
+  quantity       Int
+  recordedAt     DateTime @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId, recordedAt])
+  @@map("usage_records")
+}
+
+// ---------------------------------------------------------------------------
+// Escrow (Soroban-backed)
+// ---------------------------------------------------------------------------
+
+enum EscrowStatus {
+  PENDING
+  FUNDED
+  RELEASED
+  REFUNDED
+  DISPUTED
+  RESOLVED
+  CANCELED
+}
+
+model Escrow {
+  id                String       @id @default(cuid())
+  organizationId    String
+  contractAddress   String
+  depositorWallet   String
+  beneficiaryWallet String
+  arbitratorWallet  String?
+  amount            Decimal      @db.Decimal(20, 7)
+  asset             String
+  status            EscrowStatus @default(PENDING)
+  timeLockUntil     DateTime?
+  disputeReason     String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  milestones   Milestone[]
+
+  @@index([organizationId, status])
+  @@index([contractAddress])
+  @@map("escrows")
+}
+
+enum MilestoneStatus {
+  PENDING
+  RELEASED
+  DISPUTED
+}
+
+model Milestone {
+  id          String          @id @default(cuid())
+  escrowId    String
+  description String
+  amount      Decimal         @db.Decimal(20, 7)
+  status      MilestoneStatus @default(PENDING)
+  sortOrder   Int
+  releasedAt  DateTime?
+  createdAt   DateTime        @default(now())
+
+  escrow Escrow @relation(fields: [escrowId], references: [id], onDelete: Cascade)
+
+  @@index([escrowId])
+  @@map("milestones")
+}
+
+// ---------------------------------------------------------------------------
+// Marketplace split payments
+// ---------------------------------------------------------------------------
+
+/// A revenue-split rule applied to a single payment — e.g. platform
+/// commission + vendor payout + affiliate cut, computed at payment time.
+model SplitPayment {
+  id             String   @id @default(cuid())
+  organizationId String
+  paymentId      String
+  name           String?
+  createdAt      DateTime @default(now())
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payment      Payment          @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  recipients   SplitRecipient[]
+
+  @@index([organizationId])
+  @@index([paymentId])
+  @@map("split_payments")
+}
+
+enum SplitRecipientRole {
+  PLATFORM
+  VENDOR
+  AFFILIATE
+  TAX
+  CUSTOM
+}
+
+enum SplitRecipientStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model SplitRecipient {
+  id                String               @id @default(cuid())
+  splitPaymentId    String
+  role              SplitRecipientRole
+  destinationWallet String
+  /// Exactly one of percentageBps / fixedAmount is set, enforced at the application layer.
+  percentageBps     Int?
+  fixedAmount       Decimal?             @db.Decimal(20, 7)
+  computedAmount    Decimal              @db.Decimal(20, 7)
+  status            SplitRecipientStatus @default(PENDING)
+  stellarTxHash     String?
+  createdAt         DateTime             @default(now())
+
+  splitPayment SplitPayment @relation(fields: [splitPaymentId], references: [id], onDelete: Cascade)
+
+  @@index([splitPaymentId])
+  @@map("split_recipients")
+}
+
+// ---------------------------------------------------------------------------
+// Treasury management
+// ---------------------------------------------------------------------------
+
+enum TreasuryTransferStatus {
+  SCHEDULED
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  EXECUTED
+  FAILED
+}
+
+model TreasuryTransfer {
+  id               String                 @id @default(cuid())
+  organizationId   String
+  fromWalletId     String
+  toWalletId       String
+  amount           Decimal                @db.Decimal(20, 7)
+  asset            String
+  status           TreasuryTransferStatus @default(SCHEDULED)
+  requiresApproval Boolean                @default(false)
+  scheduledFor     DateTime?
+  executedAt       DateTime?
+  stellarTxHash    String?
+  createdAt        DateTime               @default(now())
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fromWallet   Wallet             @relation("TransferSource", fields: [fromWalletId], references: [id])
+  toWallet     Wallet             @relation("TransferDestination", fields: [toWalletId], references: [id])
+  approvals    TreasuryApproval[]
+
+  @@index([organizationId, status])
+  @@map("treasury_transfers")
+}
+
+enum ApprovalDecision {
+  APPROVED
+  REJECTED
+}
+
+/// One approver's decision on a treasury transfer that requires multi-sig
+/// style approval. A transfer needs however many approvals its
+/// organization's spending policy requires (enforced at the application
+/// layer, since policies are configurable per organization).
+model TreasuryApproval {
+  id             String           @id @default(cuid())
+  transferId     String
+  approverUserId String
+  decision       ApprovalDecision
+  note           String?
+  decidedAt      DateTime         @default(now())
+
+  transfer TreasuryTransfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  approver User             @relation(fields: [approverUserId], references: [id])
+
+  @@unique([transferId, approverUserId])
+  @@index([transferId])
+  @@map("treasury_approvals")
+}
+
+// ---------------------------------------------------------------------------
+// Webhooks
+// ---------------------------------------------------------------------------
+
+enum WebhookEndpointStatus {
+  ENABLED
+  DISABLED
+}
+
+model WebhookEndpoint {
+  id             String                @id @default(cuid())
+  organizationId String
+  url            String
+  description    String?
+  hashedSecret   String
+  enabledEvents  String[]
+  status         WebhookEndpointStatus @default(ENABLED)
+  createdAt      DateTime              @default(now())
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  events       WebhookEvent[]
+
+  @@index([organizationId])
+  @@map("webhook_endpoints")
+}
+
+enum WebhookEventStatus {
+  PENDING
+  DELIVERED
+  FAILED
+  RETRYING
+  ABANDONED
+}
+
+model WebhookEvent {
+  id                 String             @id @default(cuid())
+  organizationId     String
+  endpointId         String
+  eventType          String
+  payload            Json
+  status             WebhookEventStatus @default(PENDING)
+  attempts           Int                @default(0)
+  lastAttemptAt      DateTime?
+  nextRetryAt        DateTime?
+  responseStatusCode Int?
+  createdAt          DateTime           @default(now())
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  endpoint     WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, eventType])
+  @@index([endpointId, status])
+  @@map("webhook_events")
+}
+
+// ---------------------------------------------------------------------------
+// Audit logs & notifications
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  actorUserId    String?
+  actorApiKeyId  String?
+  action         String
+  targetType     String
+  targetId       String
+  ipAddress      String?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor        User?        @relation(fields: [actorUserId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id             String    @id @default(cuid())
+  organizationId String
+  userId         String
+  type           String
+  title          String
+  body           String
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// Analytics & settings
+// ---------------------------------------------------------------------------
+
+/// Daily pre-aggregated rollup per organization, written by a background
+/// job. The dashboard reads from this table instead of aggregating raw
+/// Payment/Subscription rows on every request.
+model DailyOrgMetrics {
+  id                       String   @id @default(cuid())
+  organizationId           String
+  date                     DateTime @db.Date
+  revenueAmount            Decimal  @default(0) @db.Decimal(20, 7)
+  paymentCount             Int      @default(0)
+  failedPaymentCount       Int      @default(0)
+  newCustomerCount         Int      @default(0)
+  newSubscriptionCount     Int      @default(0)
+  churnedSubscriptionCount Int      @default(0)
+  createdAt                DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, date])
+  @@map("daily_org_metrics")
+}
+
+model OrganizationSettings {
+  organizationId     String   @id
+  checkoutBranding   Json     @default("{}")
+  taxSettings        Json     @default("{}")
+  invoiceSettings    Json     @default("{}")
+  webhookRetryPolicy Json     @default("{}")
+  updatedAt          DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("organization_settings")
+}

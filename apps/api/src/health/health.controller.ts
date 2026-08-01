@@ -7,6 +7,7 @@ import {
   MemoryHealthIndicator,
 } from '@nestjs/terminus';
 import { RedisHealthIndicator } from './redis.health';
+import { DatabaseHealthIndicator } from './database.health';
 
 @ApiTags('health')
 @Controller('health')
@@ -16,6 +17,7 @@ export class HealthController {
     private readonly memory: MemoryHealthIndicator,
     private readonly disk: DiskHealthIndicator,
     private readonly redis: RedisHealthIndicator,
+    private readonly database: DatabaseHealthIndicator,
   ) {}
 
   /**
@@ -42,6 +44,7 @@ export class HealthController {
   ready() {
     return this.health.check([
       () => this.redis.isHealthy('redis'),
+      () => this.database.isHealthy('database'),
       () =>
         this.disk.checkStorage('disk', {
           path: '/',

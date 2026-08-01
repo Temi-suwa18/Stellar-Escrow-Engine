@@ -80,11 +80,19 @@ placeholders — before moving to the next.
       Router, Tailwind + shadcn/ui, dark/light mode, TanStack Query, Zustand
       ready), Docker Compose for local dev, multi-stage Dockerfiles for both
       apps, GitHub Actions CI (lint, typecheck, test, build, Docker build).
-- [ ] **Module 2 — Database schema.** Full Prisma schema: users, organizations,
-      teams, roles, wallets, customers, products, prices, payments,
-      transactions, invoices, refunds, subscriptions, plans, escrows,
-      milestones, treasury accounts, split payments, webhooks, API keys,
-      audit logs, notifications, settings.
+- [x] **Module 2 — Database schema.** Full Prisma schema (32 models): users,
+      OAuth accounts, sessions, magic links, 2FA recovery codes,
+      organizations, membership/RBAC, invitations, API keys, wallets,
+      customers, products, prices, payments, transactions, refunds,
+      invoices/invoice items, subscriptions, usage records, escrows,
+      milestones, split payments/recipients, treasury transfers/approvals,
+      webhook endpoints/events, audit logs, notifications, daily metrics
+      rollup, org settings. Money stored as `Decimal(20,7)` for Stellar's
+      7-decimal precision (not 2-decimal cents). `@stellar-commerce/database`
+      wired into the API with a Prisma-backed `/health/ready` check.
+      Schema validated via `prisma generate` + a real generated migration
+      (`prisma migrate diff`); live `migrate dev` against Postgres still
+      needs to be run in an environment with a database available.
 - [ ] **Module 3 — Authentication & authorization.** Email/password, Google
       OAuth, GitHub OAuth, magic link, 2FA, session management, API tokens,
       organization invitations, multi-tenant orgs, RBAC (Owner, Admin,
