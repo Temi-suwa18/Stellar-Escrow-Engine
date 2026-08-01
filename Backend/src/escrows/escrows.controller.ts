@@ -7,6 +7,8 @@ import { CurrentApiKey } from '../auth/decorators/current-api-key.decorator';
 import type { AuthenticatedApiKey } from '../auth/types/auth-request';
 import { CreateEscrowDto } from './dto/create-escrow.dto';
 import { FundEscrowDto } from './dto/fund-escrow.dto';
+import { ReleaseEscrowDto } from './dto/release-escrow.dto';
+import { RefundEscrowDto } from './dto/refund-escrow.dto';
 import { DisputeEscrowDto, ResolveDisputeDto } from './dto/dispute-escrow.dto';
 import { ListEscrowsDto } from './dto/list-escrows.dto';
 
@@ -39,6 +41,11 @@ export class EscrowsController {
     return this.escrows.get(apiKey.organizationId, id);
   }
 
+  @Get(':id/on-chain')
+  getOnChainState(@CurrentApiKey() apiKey: AuthenticatedApiKey, @Param('id') id: string) {
+    return this.escrows.getOnChainState(apiKey.organizationId, id);
+  }
+
   @Post(':id/fund')
   fund(
     @CurrentApiKey() apiKey: AuthenticatedApiKey,
@@ -49,8 +56,12 @@ export class EscrowsController {
   }
 
   @Post(':id/release')
-  release(@CurrentApiKey() apiKey: AuthenticatedApiKey, @Param('id') id: string) {
-    return this.escrows.release(apiKey.organizationId, id);
+  release(
+    @CurrentApiKey() apiKey: AuthenticatedApiKey,
+    @Param('id') id: string,
+    @Body() dto: ReleaseEscrowDto,
+  ) {
+    return this.escrows.release(apiKey.organizationId, id, dto);
   }
 
   @Post(':id/milestones/:milestoneId/release')
@@ -63,8 +74,12 @@ export class EscrowsController {
   }
 
   @Post(':id/refund')
-  refund(@CurrentApiKey() apiKey: AuthenticatedApiKey, @Param('id') id: string) {
-    return this.escrows.refund(apiKey.organizationId, id);
+  refund(
+    @CurrentApiKey() apiKey: AuthenticatedApiKey,
+    @Param('id') id: string,
+    @Body() dto: RefundEscrowDto,
+  ) {
+    return this.escrows.refund(apiKey.organizationId, id, dto);
   }
 
   @Post(':id/dispute')

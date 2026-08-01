@@ -41,6 +41,13 @@ export const envSchema = z.object({
   SOROBAN_RPC_URL: z.string().url(),
   STELLAR_NETWORK_PASSPHRASE: z.string().min(1),
   USDC_ASSET_ISSUER: z.string().optional(),
+  /**
+   * Address of the deployed escrow-contract instance (see Blockchain/).
+   * Optional: without it, escrows are DB-only — EscrowsService degrades
+   * gracefully rather than refusing to boot, since the contract may not be
+   * deployed to this environment's network yet.
+   */
+  ESCROW_CONTRACT_ID: z.string().optional(),
 
   WEBHOOK_SIGNING_SECRET: z.string().min(32),
 

@@ -7,6 +7,7 @@ import { EscrowCategory, EscrowStatus, MilestoneStatus } from '@stellar-escrow/d
 import { EscrowsService } from './escrows.service';
 import { DisputeOutcome } from './dto/dispute-escrow.dto';
 import type { PrismaService } from '../database/prisma.service';
+import type { BlockchainService } from '../blockchain/blockchain.service';
 
 const ORG_ID = 'org_1';
 
@@ -16,6 +17,7 @@ function createEscrowFixture(overrides: Record<string, unknown> = {}) {
     organizationId: ORG_ID,
     category: 'FREELANCE',
     contractAddress: null,
+    chainEscrowId: 1,
     depositorWallet: 'G'.padEnd(56, 'A'),
     beneficiaryWallet: 'G'.padEnd(56, 'B'),
     arbitratorWallet: null,
@@ -30,6 +32,24 @@ function createEscrowFixture(overrides: Record<string, unknown> = {}) {
     updatedAt: new Date(),
     milestones: [],
     ...overrides,
+  };
+}
+
+/** Defaults to "not configured" — the same DB-only, trust-the-caller behavior the pre-blockchain tests assumed. */
+function createBlockchainMock(overrides: Record<string, unknown> = {}) {
+  return {
+    isConfigured: jest.fn().mockReturnValue(false),
+    resolveAssetContract: jest.fn().mockReturnValue(null),
+    buildCreateEscrowTransaction: jest.fn(),
+    getOnChainEscrow: jest.fn(),
+    verifyTransactionSucceeded: jest.fn(),
+    ...overrides,
+  } as unknown as BlockchainService & {
+    isConfigured: jest.Mock;
+    resolveAssetContract: jest.Mock;
+    buildCreateEscrowTransaction: jest.Mock;
+    getOnChainEscrow: jest.Mock;
+    verifyTransactionSucceeded: jest.Mock;
   };
 }
 
@@ -64,11 +84,13 @@ function createPrismaMock() {
 
 describe('EscrowsService', () => {
   let prisma: ReturnType<typeof createPrismaMock>;
+  let blockchain: ReturnType<typeof createBlockchainMock>;
   let service: EscrowsService;
 
   beforeEach(() => {
     prisma = createPrismaMock();
-    service = new EscrowsService(prisma);
+    blockchain = createBlockchainMock();
+    service = new EscrowsService(prisma, blockchain);
   });
 
   describe('create', () => {
@@ -152,7 +174,7 @@ describe('EscrowsService', () => {
         createEscrowFixture({ status: EscrowStatus.RELEASED }),
       );
 
-      const result = await service.release(ORG_ID, 'esc_1');
+      const result = await service.release(ORG_ID, 'esc_1', {});
       expect(result.status).toBe(EscrowStatus.RELEASED);
     });
 
@@ -164,7 +186,7 @@ describe('EscrowsService', () => {
         }),
       );
 
-      await expect(service.release(ORG_ID, 'esc_1')).rejects.toThrow(BadRequestException);
+      await expect(service.release(ORG_ID, 'esc_1', {})).rejects.toThrow(BadRequestException);
     });
   });
 

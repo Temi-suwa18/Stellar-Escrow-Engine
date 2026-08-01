@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -10,21 +11,31 @@ import {
   type Escrow,
   type Milestone,
 } from '@stellar-escrow/database';
+import { EscrowStatus as ChainEscrowStatus } from '@stellar-escrow/blockchain';
 import { PrismaService } from '../database/prisma.service';
+import { BlockchainService, toContractAmount } from '../blockchain/blockchain.service';
 import { CreateEscrowDto } from './dto/create-escrow.dto';
 import { FundEscrowDto } from './dto/fund-escrow.dto';
+import { ReleaseEscrowDto } from './dto/release-escrow.dto';
+import { RefundEscrowDto } from './dto/refund-escrow.dto';
 import { DisputeEscrowDto, DisputeOutcome, ResolveDisputeDto } from './dto/dispute-escrow.dto';
 import { ListEscrowsDto } from './dto/list-escrows.dto';
 
 const AMOUNT_EPSILON = 1e-7;
 
 type EscrowWithMilestones = Escrow & { milestones: Milestone[] };
+type EscrowWithChainTx = EscrowWithMilestones & { unsignedCreateTransactionXdr?: string };
 
 @Injectable()
 export class EscrowsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(EscrowsService.name);
 
-  async create(organizationId: string, dto: CreateEscrowDto): Promise<EscrowWithMilestones> {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly blockchain: BlockchainService,
+  ) {}
+
+  async create(organizationId: string, dto: CreateEscrowDto): Promise<EscrowWithChainTx> {
     if (dto.milestones?.length) {
       const total = dto.milestones.reduce((sum, m) => sum + m.amount, 0);
       if (Math.abs(total - dto.amount) > AMOUNT_EPSILON) {
@@ -32,7 +43,7 @@ export class EscrowsService {
       }
     }
 
-    return this.prisma.client.escrow.create({
+    const escrow = await this.prisma.client.escrow.create({
       data: {
         organizationId,
         category: dto.category,
@@ -57,6 +68,90 @@ export class EscrowsService {
       },
       include: { milestones: { orderBy: { sortOrder: 'asc' } } },
     });
+
+    const unsignedCreateTransactionXdr = await this.buildChainCreateTx(escrow, dto);
+    return unsignedCreateTransactionXdr ? { ...escrow, unsignedCreateTransactionXdr } : escrow;
+  }
+
+  /**
+   * Registering the deal on-chain needs an arbitrator (the contract requires
+   * one — see Blockchain/contracts/escrow/src/lib.rs) and a resolvable asset
+   * contract. Returns undefined (rather than throwing) when either isn't
+   * true, or when building the tx fails for an operational reason (e.g. the
+   * RPC is unreachable) — an escrow is a valid DB record regardless of
+   * on-chain registration succeeding.
+   */
+  private async buildChainCreateTx(
+    escrow: EscrowWithMilestones,
+    dto: CreateEscrowDto,
+  ): Promise<string | undefined> {
+    if (!this.blockchain.isConfigured() || !dto.arbitratorWallet) return undefined;
+
+    const assetContractId = this.blockchain.resolveAssetContract(dto.asset);
+    if (!assetContractId) return undefined;
+
+    try {
+      return await this.blockchain.buildCreateEscrowTransaction({
+        chainEscrowId: escrow.chainEscrowId,
+        buyer: dto.depositorWallet,
+        seller: dto.beneficiaryWallet,
+        arbiter: dto.arbitratorWallet,
+        assetContractId,
+        amount: toContractAmount(dto.amount),
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed to build on-chain create_escrow transaction for escrow ${escrow.id}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      return undefined;
+    }
+  }
+
+  /** Whether this escrow would be registered on-chain under the current blockchain config. */
+  private isChainEligible(escrow: { arbitratorWallet: string | null; asset: string }): boolean {
+    return (
+      this.blockchain.isConfigured() &&
+      Boolean(escrow.arbitratorWallet) &&
+      this.blockchain.resolveAssetContract(escrow.asset) !== null
+    );
+  }
+
+  /**
+   * For actions that move funds or change custody, confirms a client-
+   * supplied tx hash actually happened on-chain and left the contract in
+   * `expectedStatus`, instead of trusting the hash blindly. Only applies
+   * when this escrow is chain-eligible; DB-only escrows fall back to the
+   * legacy trust-the-caller behavior.
+   */
+  private async verifyOnChain(
+    escrow: EscrowWithMilestones,
+    stellarTxHash: string | undefined,
+    expectedStatus: ChainEscrowStatus,
+    action: string,
+  ): Promise<void> {
+    if (!this.isChainEligible(escrow)) return;
+
+    if (!stellarTxHash) {
+      throw new BadRequestException(
+        `This escrow is registered on-chain — a stellarTxHash is required to ${action}`,
+      );
+    }
+
+    const succeeded = await this.blockchain.verifyTransactionSucceeded(stellarTxHash);
+    if (!succeeded) {
+      throw new BadRequestException(
+        `The provided transaction hash was not found or did not succeed on-chain`,
+      );
+    }
+
+    const onChain = await this.blockchain.getOnChainEscrow(escrow.chainEscrowId);
+    if (!onChain || onChain.status !== expectedStatus) {
+      throw new BadRequestException(
+        `On-chain state does not show this escrow as ${expectedStatus} yet`,
+      );
+    }
   }
 
   async list(organizationId: string, query: ListEscrowsDto) {
@@ -104,6 +199,7 @@ export class EscrowsService {
   ): Promise<EscrowWithMilestones> {
     const escrow = await this.get(organizationId, id);
     this.assertStatus(escrow, [EscrowStatus.PENDING], 'fund');
+    await this.verifyOnChain(escrow, dto.stellarTxHash, ChainEscrowStatus.Funded, 'fund');
 
     return this.prisma.client.escrow.update({
       where: { id },
@@ -117,7 +213,11 @@ export class EscrowsService {
   }
 
   /** Full release — only valid when there are no milestones, or every milestone is already released. */
-  async release(organizationId: string, id: string): Promise<EscrowWithMilestones> {
+  async release(
+    organizationId: string,
+    id: string,
+    dto: ReleaseEscrowDto,
+  ): Promise<EscrowWithMilestones> {
     const escrow = await this.get(organizationId, id);
     this.assertStatus(escrow, [EscrowStatus.FUNDED], 'release');
 
@@ -126,6 +226,8 @@ export class EscrowsService {
         'This escrow has unreleased milestones — release them individually via /milestones/:milestoneId/release',
       );
     }
+
+    await this.verifyOnChain(escrow, dto.stellarTxHash, ChainEscrowStatus.Released, 'release');
 
     return this.prisma.client.escrow.update({
       where: { id },
@@ -167,9 +269,14 @@ export class EscrowsService {
     return this.get(organizationId, id);
   }
 
-  async refund(organizationId: string, id: string): Promise<EscrowWithMilestones> {
+  async refund(
+    organizationId: string,
+    id: string,
+    dto: RefundEscrowDto,
+  ): Promise<EscrowWithMilestones> {
     const escrow = await this.get(organizationId, id);
     this.assertStatus(escrow, [EscrowStatus.FUNDED], 'refund');
+    await this.verifyOnChain(escrow, dto.stellarTxHash, ChainEscrowStatus.Refunded, 'refund');
 
     return this.prisma.client.escrow.update({
       where: { id },
@@ -207,6 +314,10 @@ export class EscrowsService {
 
     const status =
       dto.outcome === DisputeOutcome.RELEASE ? EscrowStatus.RELEASED : EscrowStatus.REFUNDED;
+    const expectedChainStatus =
+      dto.outcome === DisputeOutcome.RELEASE ? ChainEscrowStatus.Released : ChainEscrowStatus.Refunded;
+    await this.verifyOnChain(escrow, dto.stellarTxHash, expectedChainStatus, 'resolve');
+
     const disputeReason = dto.note
       ? `${escrow.disputeReason ?? ''}\n\nResolution: ${dto.note}`.trim()
       : escrow.disputeReason;
@@ -216,6 +327,18 @@ export class EscrowsService {
       data: { status, disputeReason },
       include: { milestones: { orderBy: { sortOrder: 'asc' } } },
     });
+  }
+
+  /** Live state straight from the escrow contract — the source of truth, independent of the DB row. */
+  async getOnChainState(organizationId: string, id: string) {
+    const escrow = await this.get(organizationId, id);
+    const eligible = this.isChainEligible(escrow);
+
+    return {
+      chainEscrowId: escrow.chainEscrowId,
+      eligible,
+      state: eligible ? await this.blockchain.getOnChainEscrow(escrow.chainEscrowId) : null,
+    };
   }
 
   private assertStatus(

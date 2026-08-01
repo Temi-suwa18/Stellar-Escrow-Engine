@@ -24,4 +24,15 @@ export class ResolveDisputeDto {
   @IsString()
   @MaxLength(2000)
   note?: string;
+
+  @ApiProperty({
+    required: false,
+    description:
+      'Transaction hash of the arbiter calling `resolve` on-chain, if this escrow is ' +
+      'registered on the escrow contract. When present, verified against the chain.',
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  stellarTxHash?: string;
 }

@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { validateEnv, type EnvConfig } from './config/env.validation';
 import { HealthModule } from './health/health.module';
 import { DatabaseModule } from './database/database.module';
+import { BlockchainModule } from './blockchain/blockchain.module';
 import { EmailModule } from './email/email.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
@@ -54,6 +55,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
       },
     ]),
     DatabaseModule,
+    BlockchainModule,
     EmailModule,
     AuthModule,
     OrganizationsModule,

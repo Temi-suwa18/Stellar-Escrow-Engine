@@ -26,6 +26,7 @@
     "@nestjs/swagger": "^8.1.0",
     "@nestjs/terminus": "^10.2.3",
     "@nestjs/throttler": "^6.3.0",
+    "@stellar-escrow/blockchain": "workspace:*",
     "@stellar-escrow/database": "workspace:*",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",

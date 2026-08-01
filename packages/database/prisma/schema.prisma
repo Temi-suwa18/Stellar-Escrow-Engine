@@ -619,6 +619,12 @@ model Escrow {
   category          EscrowCategory
   /// Set once the deal is actually deployed/funded on-chain; null while PENDING.
   contractAddress   String?
+  /// The `u64` id this escrow would use in the (single, shared) escrow
+  /// smart contract. Always assigned — whether the deal actually exists
+  /// on-chain yet is NOT tracked here (it would drift); it's answered by
+  /// asking the contract directly via BlockchainService.getOnChainEscrow,
+  /// which is the only source of truth for on-chain state.
+  chainEscrowId     Int            @unique @default(autoincrement())
   depositorWallet   String
   beneficiaryWallet String
   arbitratorWallet  String?

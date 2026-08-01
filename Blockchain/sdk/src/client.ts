@@ -102,6 +102,16 @@ export class EscrowContractClient {
     return decodeEscrow(simulation.result.retval);
   }
 
+  /**
+   * Looks up whether a previously-submitted transaction succeeded, for
+   * callers (like the Backend) that need to verify a client-supplied tx hash
+   * actually happened on-chain rather than trusting it blindly.
+   */
+  async getTransactionStatus(hash: string): Promise<rpc.Api.GetTransactionStatus> {
+    const result = await this.server.getTransaction(hash);
+    return result.status;
+  }
+
   private async buildTransaction(sourcePublicKey: string, method: string, args: xdr.ScVal[]) {
     const account = await this.server.getAccount(sourcePublicKey);
     const tx = new TransactionBuilder(account, {
