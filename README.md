@@ -42,7 +42,7 @@ docs/               Architecture and API documentation
 ```bash
 cp .env.example .env          # fill in real secrets before running anything beyond local dev
 pnpm install
-docker compose up -d postgres redis
+docker compose -f Infra/docker/docker-compose.yml up -d postgres redis
 pnpm dev                      # runs api (http://localhost:4000) and web (http://localhost:3000)
 ```
 
@@ -53,7 +53,7 @@ outside production. Health probes: `GET /health/live` (liveness) and
 ### Full stack via Docker Compose
 
 ```bash
-docker compose up --build
+docker compose -f Infra/docker/docker-compose.yml up --build
 ```
 
 ### Common scripts

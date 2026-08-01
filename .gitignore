@@ -37,8 +37,16 @@ pnpm-debug.log*
 packages/database/generated/
 
 # Soroban / Rust
-contracts/target/
-contracts/**/*.wasm
+Blockchain/target/
+Blockchain/**/*.wasm
+Blockchain/**/test_snapshots/
+
+# Terraform
+Infra/terraform/.terraform/
+Infra/terraform/*.tfstate
+Infra/terraform/*.tfstate.*
+Infra/terraform/*.tfplan
+Infra/terraform/.terraform.lock.hcl.backup
 
 # Misc
 .vercel/

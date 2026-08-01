@@ -2,4 +2,5 @@ packages:
   - "Frontend"
   - "Backend"
   - "packages/*"
+  - "Blockchain/sdk"
   - "sdks/*"
