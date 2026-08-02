@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Github, Twitter } from 'lucide-react';
+import { Github } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Logo } from './logo';
 
@@ -35,18 +35,13 @@ export function Footer() {
             </p>
             <div className="flex gap-3">
               <Link
-                href="https://github.com"
+                href="https://github.com/Temi-suwa18/Stellar-Escrow-Engine"
+                target="_blank"
+                rel="noreferrer"
                 className="text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="GitHub"
               >
                 <Github className="h-5 w-5" />
-              </Link>
-              <Link
-                href="https://twitter.com"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Twitter"
-              >
-                <Twitter className="h-5 w-5" />
               </Link>
             </div>
           </div>
