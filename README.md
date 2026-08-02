@@ -14,7 +14,9 @@ the API.
 ```
 Frontend/           Next.js dashboard & marketing site (App Router)
 Backend/             NestJS API — escrows, auth, organizations, webhooks
-Blockchain/          Soroban smart contracts (escrow, milestones)
+Blockchain/
+  contracts/        Soroban escrow smart contract (Rust), deployed to testnet
+  sdk/              @stellar-escrow/blockchain — internal contract client
 Infra/
   docker/           Supporting Docker assets
   terraform/        Terraform-ready infrastructure-as-code
@@ -64,7 +66,7 @@ docker compose -f Infra/docker/docker-compose.yml up --build
 | `pnpm build`                   | Build every workspace via Turborepo                    |
 | `pnpm lint` / `pnpm typecheck` | Static checks across the monorepo                      |
 | `pnpm test` / `pnpm test:e2e`  | Unit and end-to-end tests                              |
-| `pnpm db:migrate`              | Run Prisma migrations (once `packages/database` lands) |
+| `pnpm db:migrate`              | Run Prisma migrations against `DATABASE_URL`            |
 | `pnpm db:studio`               | Open Prisma Studio                                     |
 
 ## Build Progress
@@ -92,11 +94,15 @@ placeholders — before moving to the next.
       Schema validated via `prisma generate` + a real generated migration
       (`prisma migrate diff`); live `migrate dev` against Postgres still
       needs to be run in an environment with a database available.
-- [~] **Module 3 — Authentication & authorization.** Email/password, Google
-  OAuth, GitHub OAuth, magic link, 2FA, session management, API keys,
-  organization invitations, multi-tenant orgs, RBAC (Owner, Admin,
-  Developer, Finance, Viewer). Backend implemented; needs a live-DB test
-  pass and frontend wiring.
+- [x] **Module 3 — Authentication & authorization.** Email/password, Google
+      OAuth, GitHub OAuth, magic link, 2FA, session management (JWT access +
+      rotating refresh tokens with reuse detection), API keys, organization
+      invitations, multi-tenant orgs, RBAC (Owner, Admin, Developer,
+      Finance, Viewer). Frontend wired end-to-end (signup/login/dashboard).
+      Unit-tested throughout — auth flow, session rotation, password
+      hashing, 2FA (real TOTP round-trips, not mocked), token signing, email
+      sending. Still needs a live-DB pass; this sandbox has never had a
+      reachable Postgres to run one against.
 - [x] **Escrow API.** Create (with optional milestones, time locks, or an
       ecommerce-style auto-release window), fund, release (full or
       per-milestone, auto-completing once every milestone is released),
@@ -104,17 +110,39 @@ placeholders — before moving to the next.
       category enum (freelance/ecommerce/rental/logistics) drives defaults;
       the endpoints are identical across all four. Authenticated with
       `X-Api-Key` — "apps just call the API" is the actual auth model here,
-      not a JWT dashboard session. 17 unit tests cover the state machine.
-      Not yet wired to real Soroban contracts — `fund` currently just
-      records a caller-supplied tx hash, and `autoReleaseAt` is stored but
-      nothing executes it yet (no background scheduler exists).
-- [ ] Escrow dashboard (view deals, milestones, disputes)
+      not a JWT dashboard session.
+- [x] **Soroban escrow contract**, deployed and verified against real
+      Stellar testnet (not just unit-tested): create → fund → release moved
+      real XLM buyer → contract → seller, confirmed via Horizon. The Backend
+      verifies every fund/release/refund/dispute/resolve call against live
+      on-chain state before trusting a client-supplied transaction hash,
+      for any escrow with an arbitrator and a resolvable asset — DB-only
+      escrows (no arbitrator) still work exactly as before. Not yet
+      supported on-chain: per-milestone release (the contract only knows
+      whole-escrow state) and `autoReleaseAt` (stored, nothing executes it
+      yet — no background scheduler exists).
+- [x] **`@stellar-escrow/sdk`** — the official TypeScript/JavaScript API
+      client (`sdks/typescript`), covering every escrow endpoint including
+      the on-chain state read. Zero dependencies beyond `fetch`.
+- [x] **Developer docs** (`/docs` on the marketing site) — quickstart,
+      full endpoint reference, auth model, and the Stripe-style error
+      envelope, generated from the real API surface.
+- [ ] Escrow dashboard (view deals, milestones, disputes) — the dashboard
+      currently only manages API keys; browsing escrows themselves needs a
+      session-authenticated read path, since the Escrows API is API-key
+      only by design (see above).
 - [ ] Webhooks (escrow.created/funded/released/disputed, retries, signing)
-- [ ] Soroban escrow + milestone contracts
-- [ ] Developer portal & SDKs (TypeScript first, others after)
-- [ ] Security hardening pass (rate limiting, CSRF/XSS/SQLi defenses, secret encryption, audit logging)
-- [ ] End-to-end test suite (Playwright) + smart contract tests
-- [ ] Production deployment (Kubernetes-ready manifests, Terraform)
+- [ ] Per-milestone release on the Soroban contract
+- [ ] Security hardening pass beyond what's landed so far (rate limiting
+      and on-chain tx verification exist; still want CSRF defenses, secret
+      encryption at rest, audit logging)
+- [ ] End-to-end test suite (Playwright) — unit and integration tests exist
+      throughout the Backend, Frontend, Blockchain SDK, and public SDK; nothing
+      yet drives the full stack through a browser automatically
+- [ ] Production deployment: `Infra/terraform` provisions AWS (VPC, ECS
+      Fargate with autoscaling, RDS, ElastiCache, ALB, ECR) and CI pushes
+      images to ECR on every merge to `main` — `terraform apply` and wiring
+      a new image into the running ECS services is still a manual, gated step
 
 > **Note:** this project pivoted from a broad Stripe-style commerce platform
 > (checkout/subscriptions/invoicing/treasury) to a focused escrow protocol.
