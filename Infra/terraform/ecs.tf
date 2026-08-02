@@ -244,6 +244,13 @@ resource "aws_ecs_service" "api" {
     container_port   = 4000
   }
 
+  # Autoscaling (see autoscaling.tf) owns desired_count after the first
+  # apply; without this, every subsequent `terraform apply` would reset it
+  # back to var.api_desired_count and undo whatever the scaler just did.
+  lifecycle {
+    ignore_changes = [desired_count]
+  }
+
   depends_on = [aws_lb_listener.http, aws_lb_listener_rule.http_api]
 }
 
@@ -263,6 +270,10 @@ resource "aws_ecs_service" "web" {
     target_group_arn = aws_lb_target_group.web.arn
     container_name   = "web"
     container_port   = 3000
+  }
+
+  lifecycle {
+    ignore_changes = [desired_count]
   }
 
   depends_on = [aws_lb_listener.http]

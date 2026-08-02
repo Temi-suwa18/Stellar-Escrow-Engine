@@ -67,5 +67,12 @@ State is local by default. Uncomment the `backend "s3"` block in
 - **DNS**: no `aws_route53_zone`/`aws_route53_record` — this assumes the
   domain is managed elsewhere and you'll point it at `alb_dns_name`
   manually.
-- **Autoscaling**: `desired_count` is fixed via variables; no
-  `aws_appautoscaling_target`/`policy` yet.
+
+## Autoscaling
+
+Both services target-track CPU utilization (`var.autoscaling_target_cpu_percent`,
+default 60%) between `var.{api,web}_min_capacity` and `var.{api,web}_max_capacity`.
+`desired_count` on the `aws_ecs_service` resources only sets the *initial*
+task count — the services have `lifecycle { ignore_changes = [desired_count] }`
+so a later `terraform apply` doesn't reset whatever the autoscaler has since
+scaled to.

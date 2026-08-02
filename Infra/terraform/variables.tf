@@ -70,6 +70,36 @@ variable "web_desired_count" {
   default     = 2
 }
 
+variable "api_min_capacity" {
+  description = "Floor for api service autoscaling. Should be >= 2 in production for zero-downtime deploys."
+  type        = number
+  default     = 2
+}
+
+variable "api_max_capacity" {
+  description = "Ceiling for api service autoscaling."
+  type        = number
+  default     = 10
+}
+
+variable "web_min_capacity" {
+  description = "Floor for web service autoscaling."
+  type        = number
+  default     = 2
+}
+
+variable "web_max_capacity" {
+  description = "Ceiling for web service autoscaling."
+  type        = number
+  default     = 10
+}
+
+variable "autoscaling_target_cpu_percent" {
+  description = "Target average CPU utilization the autoscaler tries to maintain for both services."
+  type        = number
+  default     = 60
+}
+
 variable "db_instance_class" {
   description = "RDS instance class for Postgres."
   type        = string
