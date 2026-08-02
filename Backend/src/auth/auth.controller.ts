@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
 import type { EnvConfig } from '../config/env.validation';
@@ -42,13 +43,19 @@ export class AuthController {
     private readonly config: ConfigService<EnvConfig, true>,
   ) {}
 
+  // Stricter than the global default (120/min, see ThrottlerModule.forRoot
+  // in app.module.ts) — these are unauthenticated, credential-guessing-
+  // shaped endpoints where the global limit is far too permissive
+  // (120 login attempts/min per IP is a functioning brute-force budget).
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('register')
   async register(@Body() dto: RegisterDto, @Req() req: AuthRequest) {
     return this.auth.register(dto, requestMeta(req));
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('login')
   async login(@Body() dto: LoginDto, @Req() req: AuthRequest) {
     return this.auth.login(dto, requestMeta(req));
@@ -67,7 +74,10 @@ export class AuthController {
     return { success: true };
   }
 
+  // Tighter still — each call sends an email; without this an attacker
+  // could use the endpoint to spam/email-bomb an arbitrary inbox for free.
   @Public()
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @Post('magic-link')
   async requestMagicLink(@Body() dto: RequestMagicLinkDto) {
     await this.auth.requestMagicLink(dto.email);
