@@ -1,5 +1,13 @@
 import { EscrowApiError, type EscrowErrorType } from './errors';
-import type { CreateEscrowInput, Escrow, ListEscrowsQuery, ListEscrowsResult } from './types';
+import type {
+  CreateEscrowInput,
+  Escrow,
+  FundEscrowInput,
+  ListEscrowsQuery,
+  ListEscrowsResult,
+  RefundEscrowInput,
+  ReleaseEscrowInput,
+} from './types';
 
 const DEFAULT_BASE_URL = 'https://api.escra.dev';
 
@@ -105,5 +113,36 @@ export class StellarEscrow {
 
   get(escrowId: string): Promise<Escrow> {
     return this.request<Escrow>(`/escrows/${encodeURIComponent(escrowId)}`);
+  }
+
+  /** Marks an escrow funded. If it's chain-eligible, `stellarTxHash` is verified against the real transaction before this succeeds. */
+  fund(escrowId: string, input: FundEscrowInput): Promise<Escrow> {
+    return this.request<Escrow>(`/escrows/${encodeURIComponent(escrowId)}/fund`, {
+      method: 'POST',
+      body: input,
+    });
+  }
+
+  /** Full release — only valid when there are no milestones, or every milestone is already released. */
+  release(escrowId: string, input: ReleaseEscrowInput = {}): Promise<Escrow> {
+    return this.request<Escrow>(`/escrows/${encodeURIComponent(escrowId)}/release`, {
+      method: 'POST',
+      body: input,
+    });
+  }
+
+  /** Releases a single milestone; the escrow auto-completes once every milestone has been released. */
+  releaseMilestone(escrowId: string, milestoneId: string): Promise<Escrow> {
+    return this.request<Escrow>(
+      `/escrows/${encodeURIComponent(escrowId)}/milestones/${encodeURIComponent(milestoneId)}/release`,
+      { method: 'POST' },
+    );
+  }
+
+  refund(escrowId: string, input: RefundEscrowInput = {}): Promise<Escrow> {
+    return this.request<Escrow>(`/escrows/${encodeURIComponent(escrowId)}/refund`, {
+      method: 'POST',
+      body: input,
+    });
   }
 }
