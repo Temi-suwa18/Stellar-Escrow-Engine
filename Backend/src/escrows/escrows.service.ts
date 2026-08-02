@@ -333,11 +333,16 @@ export class EscrowsService {
   async getOnChainState(organizationId: string, id: string) {
     const escrow = await this.get(organizationId, id);
     const eligible = this.isChainEligible(escrow);
+    const onChain = eligible ? await this.blockchain.getOnChainEscrow(escrow.chainEscrowId) : null;
 
     return {
       chainEscrowId: escrow.chainEscrowId,
       eligible,
-      state: eligible ? await this.blockchain.getOnChainEscrow(escrow.chainEscrowId) : null,
+      // `amount` is a bigint on the contract client's type — JSON.stringify
+      // throws on bigint, so this must be stringified before it ever
+      // reaches Nest's response serializer, not left for the caller to
+      // discover as a 500.
+      state: onChain ? { ...onChain, amount: onChain.amount.toString() } : null,
     };
   }
 

@@ -313,4 +313,44 @@ describe('EscrowsService', () => {
       ).rejects.toThrow(ConflictException);
     });
   });
+
+  describe('getOnChainState', () => {
+    it('is not chain-eligible without an arbitrator, even with blockchain configured', async () => {
+      blockchain.isConfigured.mockReturnValue(true);
+      blockchain.resolveAssetContract.mockReturnValue('CTOKEN...');
+      prisma.client.escrow.findFirst.mockResolvedValue(
+        createEscrowFixture({ arbitratorWallet: null }),
+      );
+
+      const result = await service.getOnChainState(ORG_ID, 'esc_1');
+
+      expect(result).toEqual({ chainEscrowId: 1, eligible: false, state: null });
+      expect(blockchain.getOnChainEscrow).not.toHaveBeenCalled();
+    });
+
+    it('stringifies the on-chain amount instead of returning a raw bigint', async () => {
+      // A raw bigint here would make JSON.stringify throw once this response
+      // actually reaches the HTTP layer — this is what surfaced that bug.
+      blockchain.isConfigured.mockReturnValue(true);
+      blockchain.resolveAssetContract.mockReturnValue('CTOKEN...');
+      blockchain.getOnChainEscrow.mockResolvedValue({
+        buyer: 'GBUYER',
+        seller: 'GSELLER',
+        arbiter: 'GARBITER',
+        token: 'CTOKEN',
+        amount: 500_000_000n,
+        status: 'Funded',
+      });
+      prisma.client.escrow.findFirst.mockResolvedValue(
+        createEscrowFixture({ arbitratorWallet: 'G'.padEnd(56, 'C') }),
+      );
+
+      const result = await service.getOnChainState(ORG_ID, 'esc_1');
+
+      expect(result.eligible).toBe(true);
+      expect(result.state?.amount).toBe('500000000');
+      expect(typeof result.state?.amount).toBe('string');
+      expect(() => JSON.stringify(result)).not.toThrow();
+    });
+  });
 });
