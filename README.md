@@ -150,7 +150,3 @@ placeholders — before moving to the next.
 > unused by the current product direction and will be trimmed as the escrow
 > API solidifies, rather than rewritten under time pressure right now.
 
-## License
-
-Proprietary — all rights reserved. No license is granted to use, copy, modify,
-or distribute this code without explicit permission.
