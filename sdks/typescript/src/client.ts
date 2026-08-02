@@ -1,4 +1,5 @@
 import { EscrowApiError, type EscrowErrorType } from './errors';
+import type { CreateEscrowInput, Escrow, ListEscrowsQuery, ListEscrowsResult } from './types';
 
 const DEFAULT_BASE_URL = 'https://api.escra.dev';
 
@@ -25,10 +26,8 @@ interface ErrorEnvelope {
 }
 
 /**
- * Base HTTP client for the ESCRA API. Handles auth, the `/v1` prefix, and
- * turning non-2xx responses into `EscrowApiError`. Resource-specific methods
- * (escrows, milestones, ...) are added via prototype augmentation in their
- * own modules so this file stays a stable, minimal foundation.
+ * Client for the ESCRA API. `create`/`list`/`get` here; lifecycle methods
+ * (fund, release, refund, dispute, resolve) are added lower in this class.
  */
 export class StellarEscrow {
   private readonly apiKey: string;
@@ -87,5 +86,24 @@ export class StellarEscrow {
     }
 
     return payload as T;
+  }
+
+  /**
+   * Registers a new escrow deal. If it's chain-eligible (has an
+   * `arbitratorWallet` and a resolvable asset), the response includes
+   * `unsignedCreateTransactionXdr` for the depositor's wallet to sign.
+   */
+  create(input: CreateEscrowInput): Promise<Escrow> {
+    return this.request<Escrow>('/escrows', { method: 'POST', body: input });
+  }
+
+  list(query: ListEscrowsQuery = {}): Promise<ListEscrowsResult> {
+    return this.request<ListEscrowsResult>('/escrows', {
+      query: query as Record<string, string | number | undefined>,
+    });
+  }
+
+  get(escrowId: string): Promise<Escrow> {
+    return this.request<Escrow>(`/escrows/${encodeURIComponent(escrowId)}`);
   }
 }
