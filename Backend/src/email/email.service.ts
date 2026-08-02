@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport, type Transporter } from 'nodemailer';
 import type { EnvConfig } from '../config/env.validation';
+import { escapeHtml } from '../common/html-escape.util';
 
 export interface SendEmailInput {
   to: string;
@@ -73,11 +74,17 @@ export class EmailService implements OnModuleInit {
     organizationName: string,
     url: string,
   ): Promise<void> {
+    // organizationName is user-controlled (set at organization creation,
+    // constrained only by length — see CreateOrganizationDto) and lands
+    // directly in an HTML email body, so it must be escaped before
+    // interpolation. `url` doesn't need this: it's always server-built
+    // from a signed invitation token, never user input.
+    const safeName = escapeHtml(organizationName);
     await this.send({
       to,
       subject: `You've been invited to join ${organizationName} on ESCRA`,
       text: `You've been invited to join ${organizationName} on ESCRA.\n\nAccept the invitation: ${url}`,
-      html: `<p>You've been invited to join <strong>${organizationName}</strong> on ESCRA.</p><p><a href="${url}">Accept the invitation</a></p>`,
+      html: `<p>You've been invited to join <strong>${safeName}</strong> on ESCRA.</p><p><a href="${url}">Accept the invitation</a></p>`,
     });
   }
 }
