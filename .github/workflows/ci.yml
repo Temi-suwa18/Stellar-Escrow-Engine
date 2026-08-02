@@ -127,3 +127,59 @@ jobs:
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # Pushes to the ECR repos Infra/terraform/ecr.tf creates (escra/api,
+  # escra/web), tagged with the commit SHA and `latest`. Only runs on main —
+  # PR builds stop at docker-build (compile-check only, never pushed).
+  #
+  # Requires these repo variables/secrets to be configured (Settings ->
+  # Secrets and variables -> Actions):
+  #   vars.AWS_REGION      e.g. "us-east-1" — must match Infra/terraform's var.aws_region
+  #   secrets.AWS_ROLE_ARN IAM role this workflow assumes via OIDC (no long-lived AWS keys)
+  #
+  # The role needs an OIDC trust policy for token.actions.githubusercontent.com
+  # scoped to this repo, and ecr:GetAuthorizationToken / ecr:BatchCheckLayerAvailability
+  # / ecr:PutImage / ecr:InitiateLayerUpload / ecr:UploadLayerPart / ecr:CompleteLayerUpload
+  # on the two repositories — see https://github.com/aws-actions/configure-aws-credentials
+  # for the trust policy shape.
+  docker-push:
+    name: Push images to ECR
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - app: Backend
+            repository: escra/api
+          - app: Frontend
+            repository: escra/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Log in to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push ${{ matrix.app }} image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.app }}/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.ecr-login.outputs.registry }}/${{ matrix.repository }}:${{ github.sha }}
+            ${{ steps.ecr-login.outputs.registry }}/${{ matrix.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

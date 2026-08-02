@@ -30,9 +30,10 @@ After `apply`, point your DNS at the `alb_dns_name` output:
 ### Pushing images
 
 `aws_ecs_task_definition` references `<ecr_repo>:<var.api_image_tag>` /
-`:<var.web_image_tag>` (defaulting to `latest`). Build and push from repo
-root using the existing `Backend/Dockerfile` / `Frontend/Dockerfile`
-(the same ones `docker-compose.yml` and CI already use):
+`:<var.web_image_tag>` (defaulting to `latest`). CI does this automatically
+on every push to `main` (see `.github/workflows/ci.yml`'s `docker-push`
+job) — the manual version below is for pushing a one-off build, or if CI
+isn't set up yet:
 
 ```bash
 aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <account>.dkr.ecr.<region>.amazonaws.com
@@ -60,10 +61,14 @@ State is local by default. Uncomment the `backend "s3"` block in
   automatically, but the four app secrets need a value set out-of-band
   (`aws secretsmanager put-secret-value`) before the api task can boot
   cleanly, per `Backend/src/config/env.validation.ts`'s required fields.
-- **CI/CD**: nothing here builds/pushes images or runs `terraform apply`
-  automatically. `.github/workflows/ci.yml` (which must stay at that path —
-  GitHub only reads workflows from `.github/workflows/`) currently builds
-  and validates images but doesn't deploy; wiring that up is a follow-on.
+- **CI/CD**: `.github/workflows/ci.yml`'s `docker-push` job builds and pushes
+  both images to the ECR repos this Terraform creates on every push to
+  `main` (via OIDC — see the comments on that job for the IAM role/trust
+  policy it needs). It does not run `terraform apply` or update the ECS
+  services to the new image automatically — that's still a manual
+  `terraform apply -var="api_image_tag=<sha>" -var="web_image_tag=<sha>"`,
+  deliberately: infrastructure changes and ECS deploys are a bigger blast
+  radius than most teams want fully automatic without a gate.
 - **DNS**: no `aws_route53_zone`/`aws_route53_record` — this assumes the
   domain is managed elsewhere and you'll point it at `alb_dns_name`
   manually.
