@@ -150,6 +150,118 @@ fn unrelated_address_cannot_release() {
 }
 
 #[test]
+fn arbiter_can_resolve_in_sellers_favor() {
+    let s = setup();
+    let escrow_id = 7u64;
+
+    s.contract
+        .create_escrow(&escrow_id, &s.buyer, &s.seller, &s.arbiter, &s.token.address, &300);
+    s.contract.fund(&escrow_id);
+    s.contract.dispute(&escrow_id, &s.seller);
+    s.contract.resolve(&escrow_id, &true);
+
+    assert_eq!(s.token.balance(&s.seller), 300);
+    let escrow = s.contract.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Released);
+}
+
+#[test]
+fn resolving_a_non_disputed_escrow_fails() {
+    let s = setup();
+    let escrow_id = 8u64;
+
+    s.contract
+        .create_escrow(&escrow_id, &s.buyer, &s.seller, &s.arbiter, &s.token.address, &100);
+    s.contract.fund(&escrow_id);
+
+    // Never disputed — still Funded, not Disputed.
+    let result = s.contract.try_resolve(&escrow_id, &true);
+    assert_eq!(result, Err(Ok(Error::InvalidStatus)));
+}
+
+#[test]
+fn unrelated_address_cannot_open_a_dispute() {
+    let s = setup();
+    let escrow_id = 9u64;
+    let stranger = Address::generate(&s.env);
+
+    s.contract
+        .create_escrow(&escrow_id, &s.buyer, &s.seller, &s.arbiter, &s.token.address, &100);
+    s.contract.fund(&escrow_id);
+
+    let result = s.contract.try_dispute(&escrow_id, &stranger);
+    assert_eq!(result, Err(Ok(Error::Unauthorized)));
+}
+
+#[test]
+fn disputing_before_funding_fails() {
+    let s = setup();
+    let escrow_id = 10u64;
+
+    s.contract
+        .create_escrow(&escrow_id, &s.buyer, &s.seller, &s.arbiter, &s.token.address, &100);
+
+    // Still Created, never funded.
+    let result = s.contract.try_dispute(&escrow_id, &s.buyer);
+    assert_eq!(result, Err(Ok(Error::InvalidStatus)));
+}
+
+#[test]
+fn releasing_twice_fails_the_second_time() {
+    let s = setup();
+    let escrow_id = 11u64;
+
+    s.contract
+        .create_escrow(&escrow_id, &s.buyer, &s.seller, &s.arbiter, &s.token.address, &100);
+    s.contract.fund(&escrow_id);
+    s.contract.release(&escrow_id, &s.buyer);
+
+    // Already Released — a second release must not pay out again.
+    let result = s.contract.try_release(&escrow_id, &s.buyer);
+    assert_eq!(result, Err(Ok(Error::InvalidStatus)));
+    assert_eq!(s.token.balance(&s.seller), 100);
+}
+
+#[test]
+fn zero_amount_is_rejected() {
+    let s = setup();
+    let escrow_id = 12u64;
+
+    let result = s
+        .contract
+        .try_create_escrow(&escrow_id, &s.buyer, &s.seller, &s.arbiter, &s.token.address, &0);
+    assert_eq!(result, Err(Ok(Error::InvalidAmount)));
+}
+
+#[test]
+fn negative_amount_is_rejected() {
+    let s = setup();
+    let escrow_id = 13u64;
+
+    let result = s.contract.try_create_escrow(
+        &escrow_id,
+        &s.buyer,
+        &s.seller,
+        &s.arbiter,
+        &s.token.address,
+        &-50,
+    );
+    assert_eq!(result, Err(Ok(Error::InvalidAmount)));
+}
+
+#[test]
+fn get_escrow_on_an_unknown_id_fails_with_not_found() {
+    let s = setup();
+
+    // Verified against the real deployed testnet contract too (see
+    // Blockchain/README.md / BlockchainService.getOnChainEscrow) — this
+    // is the exact error the Backend distinguishes "not registered
+    // on-chain yet" from every other failure mode on.
+    let result = s.contract.try_get_escrow(&999u64);
+    assert_eq!(result, Err(Ok(Error::NotFound)));
+}
+
+#[test]
 fn print_sample_escrow_xdr_for_client_fixture() {
     use soroban_sdk::{xdr::{Limits, WriteXdr}, IntoVal, TryFromVal, Val};
 
