@@ -34,12 +34,23 @@ export default function OpengraphImage() {
               border: '1px solid rgba(59,130,246,0.4)',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#60a5fa',
-              fontSize: 28,
-              fontWeight: 700,
             }}
           >
-            $
+            {/* Same mark as components/marketing/logo.tsx and app/icon.tsx — not a stand-in. */}
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 2 3 7v10l9 5 9-5V7l-9-5Z"
+                stroke="#60a5fa"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 12 3 7m9 5 9-5m-9 5v10"
+                stroke="#60a5fa"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
           <div style={{ display: 'flex', color: '#fff', fontSize: 40, fontWeight: 700 }}>
             ESCRA
