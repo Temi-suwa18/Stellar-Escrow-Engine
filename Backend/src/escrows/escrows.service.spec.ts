@@ -276,6 +276,41 @@ describe('EscrowsService', () => {
       const result = await service.dispute(ORG_ID, 'esc_1', { reason: 'bad delivery' });
       expect(result.status).toBe(EscrowStatus.DISPUTED);
     });
+
+    it('requires and verifies a stellarTxHash for chain-eligible escrows', async () => {
+      blockchain.isConfigured.mockReturnValue(true);
+      blockchain.resolveAssetContract.mockReturnValue('CTOKEN...');
+      const chainEligibleEscrow = createEscrowFixture({
+        status: EscrowStatus.FUNDED,
+        arbitratorWallet: 'G'.padEnd(56, 'C'),
+      });
+      prisma.client.escrow.findFirst.mockResolvedValue(chainEligibleEscrow);
+
+      // No stellarTxHash at all — should be rejected before touching the chain.
+      await expect(service.dispute(ORG_ID, 'esc_1', { reason: 'bad delivery' })).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(blockchain.verifyTransactionSucceeded).not.toHaveBeenCalled();
+
+      // A hash that doesn't verify on-chain — also rejected.
+      blockchain.verifyTransactionSucceeded.mockResolvedValue(false);
+      await expect(
+        service.dispute(ORG_ID, 'esc_1', { reason: 'bad delivery', stellarTxHash: 'bad_tx' }),
+      ).rejects.toThrow(BadRequestException);
+
+      // A hash that verifies, and matching on-chain status — succeeds.
+      blockchain.verifyTransactionSucceeded.mockResolvedValue(true);
+      blockchain.getOnChainEscrow.mockResolvedValue({ status: 'Disputed' });
+      prisma.client.escrow.update.mockResolvedValue(
+        createEscrowFixture({ status: EscrowStatus.DISPUTED }),
+      );
+
+      const result = await service.dispute(ORG_ID, 'esc_1', {
+        reason: 'bad delivery',
+        stellarTxHash: 'good_tx',
+      });
+      expect(result.status).toBe(EscrowStatus.DISPUTED);
+    });
   });
 
   describe('resolve', () => {

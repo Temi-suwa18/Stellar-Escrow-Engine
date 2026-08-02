@@ -7,6 +7,17 @@ export class DisputeEscrowDto {
   @MinLength(3)
   @MaxLength(2000)
   reason!: string;
+
+  @ApiProperty({
+    required: false,
+    description:
+      'Transaction hash of the buyer/seller calling `dispute` on-chain, if this escrow is ' +
+      'registered on the escrow contract. When present, verified against the chain.',
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  stellarTxHash?: string;
 }
 
 export enum DisputeOutcome {

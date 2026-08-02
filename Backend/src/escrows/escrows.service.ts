@@ -297,6 +297,8 @@ export class EscrowsService {
       throw new BadRequestException('This escrow has no arbitrator configured');
     }
 
+    await this.verifyOnChain(escrow, dto.stellarTxHash, ChainEscrowStatus.Disputed, 'dispute');
+
     return this.prisma.client.escrow.update({
       where: { id },
       data: { status: EscrowStatus.DISPUTED, disputeReason: dto.reason },
