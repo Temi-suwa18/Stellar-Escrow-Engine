@@ -1,13 +1,23 @@
 {
   "name": "@stellar-escrow/sdk",
   "version": "0.1.0",
-  "private": true,
   "description": "Official TypeScript/JavaScript client for the ESCRA escrow API.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Temi-suwa18/Stellar-Escrow-Engine",
+    "directory": "sdks/typescript"
+  },
+  "keywords": ["escrow", "stellar", "soroban", "payments", "api-client"],
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js"
   },
+  "files": ["dist"],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint \"{src,test}/**/*.ts\" --max-warnings=0",
