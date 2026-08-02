@@ -111,6 +111,11 @@ export class AuthController {
     return this.twoFactor.generateSetup(user.email);
   }
 
+  // Both of these re-verify a secret (a TOTP code / the account password)
+  // given only a valid session — the exact shape an attacker holding a
+  // stolen-but-still-valid access token would use to brute-force the rest
+  // of the way in. Same reasoning as login/register above.
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('2fa/confirm')
   async confirmTwoFactor(@CurrentUser() user: AuthenticatedUser, @Body() dto: ConfirmTwoFactorDto) {
     if (!this.twoFactor.verifyToken(dto.secret, dto.token)) {
@@ -120,6 +125,7 @@ export class AuthController {
     return { recoveryCodes };
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('2fa/disable')
   async disableTwoFactor(@CurrentUser() user: AuthenticatedUser, @Body() dto: DisableTwoFactorDto) {
     const record = await this.prisma.client.user.findUniqueOrThrow({ where: { id: user.id } });
