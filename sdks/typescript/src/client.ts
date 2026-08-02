@@ -1,12 +1,15 @@
 import { EscrowApiError, type EscrowErrorType } from './errors';
 import type {
   CreateEscrowInput,
+  DisputeEscrowInput,
   Escrow,
   FundEscrowInput,
   ListEscrowsQuery,
   ListEscrowsResult,
+  OnChainState,
   RefundEscrowInput,
   ReleaseEscrowInput,
+  ResolveDisputeInput,
 } from './types';
 
 const DEFAULT_BASE_URL = 'https://api.escra.dev';
@@ -144,5 +147,26 @@ export class StellarEscrow {
       method: 'POST',
       body: input,
     });
+  }
+
+  /** Opens a dispute — the escrow must have an `arbitratorWallet` configured. */
+  dispute(escrowId: string, input: DisputeEscrowInput): Promise<Escrow> {
+    return this.request<Escrow>(`/escrows/${encodeURIComponent(escrowId)}/dispute`, {
+      method: 'POST',
+      body: input,
+    });
+  }
+
+  /** Arbiter settles a disputed escrow, releasing to the beneficiary or refunding the depositor. */
+  resolve(escrowId: string, input: ResolveDisputeInput): Promise<Escrow> {
+    return this.request<Escrow>(`/escrows/${encodeURIComponent(escrowId)}/resolve`, {
+      method: 'POST',
+      body: input,
+    });
+  }
+
+  /** Reads live state straight from the escrow smart contract, independent of the DB row. */
+  getOnChain(escrowId: string): Promise<OnChainState> {
+    return this.request<OnChainState>(`/escrows/${encodeURIComponent(escrowId)}/on-chain`);
   }
 }
