@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/marketing/logo';
+import { ApiKeysCard } from '@/components/dashboard/api-keys-card';
 import { apiFetch, ApiError } from '@/lib/api-client';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -127,6 +128,8 @@ export default function DashboardPage() {
                 ))}
               </CardContent>
             </Card>
+
+            {data.organizations[0] && <ApiKeysCard organizationId={data.organizations[0].id} />}
 
             <Card>
               <CardHeader>
