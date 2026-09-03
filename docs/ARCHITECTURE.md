@@ -1,103 +1,86 @@
 # Architecture
 
-This describes the actual implementation in `contracts/escrow/src/`
-(`lib.rs`, `types.rs`, `errors.rs`) — see [README.md](../README.md)
-for a narrative walkthrough and the full method reference.
+A tour of how the pieces fit together — for contributors, not end users
+(end-user API docs live at `/docs` on the marketing site, backed by
+`Backend/src/escrows/escrows.controller.ts`; interactive Swagger is served
+at `Backend`'s `/docs` route outside production).
 
-## Storage layout
-
-The contract uses a single `DataKey` enum
-(`contracts/escrow/src/types.rs`) across two storage categories:
-
-- **Instance storage**: `DataKey::Admin`, `DataKey::Arbiter` — set
-  once at `init` — and `DataKey::NextShipmentId`, an incrementing
-  counter read on every `create_shipment` call.
-- **Persistent storage**, keyed per shipment and per party:
-  - `DataKey::Shipment(shipment_id)` -> the full `Shipment` record
-  - `DataKey::SenderShipments(sender)` -> `Vec<u64>` of shipment ids
-  - `DataKey::CarrierShipments(carrier)` -> `Vec<u64>` of shipment ids
-  - `DataKey::OpenShipments` -> `Vec<u64>`, the marketplace feed of
-    shipments waiting for a carrier
-
-`OpenShipments` is maintained as an explicit list rather than derived
-by scanning, so `list_open_shipments()` is a single storage read
-regardless of how many shipments have ever been created.
-
-## The `Shipment` state machine
-
-`ShipmentStatus` (`types.rs`) moves in one direction, with two exits
-from `Open` and one detour from `Accepted`/`InTransit`:
+## The shape of the system
 
 ```
-Open --accept_shipment--> Accepted --confirm_pickup--> InTransit --confirm_delivery--> Delivered
-  |                          |                            |
-  |--cancel_shipment-->  Cancelled                        |
-  |--reclaim_expired-->  Expired                           |
-                            \--raise_dispute-----------------/
-                                        |
-                                        v
-                                   Disputed --resolve_dispute--> Resolved
+                    ┌─────────────────────┐
+   Browser  ──────► │  Frontend (Next.js)  │  session-authenticated
+                    │  dashboard/marketing │  (JWT, via /auth/*)
+                    └──────────┬───────────┘
+                               │ /v1/auth/*, /v1/organizations/*
+                               ▼
+   API-key   ──────► ┌──────────────────────┐        ┌──────────────────┐
+   caller             │  Backend (NestJS)     │───────►│  Postgres (Prisma) │
+   ("apps just        │  /v1/escrows/*        │        └──────────────────┘
+   call the API")     └──────────┬───────────┘
+                               │ verifies on-chain state via
+                               ▼
+                    ┌──────────────────────┐        ┌──────────────────┐
+                    │ @stellar-escrow/      │───────►│ Soroban escrow    │
+                    │ blockchain (internal) │        │ contract (testnet)│
+                    └──────────────────────┘        └──────────────────┘
 ```
 
-Every transition is enforced with a `matches!(shipment.status, ...)`
-guard in `lib.rs` before any state or funds move — e.g.
-`confirm_pickup` rejects unless `status == Accepted`, and
-`cancel_shipment` rejects unless `status == Open`. There is no way to
-skip a state or move backwards.
+Two genuinely separate auth models exist side by side, on purpose:
 
-## Party roles and authorization
+- **Dashboard** (`Frontend/`): a human signs in, gets a JWT session, manages
+  their organization and API keys.
+- **Escrows API** (`/v1/escrows/*`): an *application* calls it with an
+  `X-Api-Key` header. This is deliberate — "apps just call the API" is the
+  actual product, not a JWT-gated dashboard flow. The dashboard cannot call
+  the Escrows API directly for this reason (see `Backend/src/api-keys/` —
+  the dashboard's job is to *issue* the key an app then uses).
 
-Every state-changing method takes an explicit party `Address` and
-calls `.require_auth()` on it — the contract never infers who is
-allowed to act from `env.invoker()` or similar. There is no admin
-override for any per-shipment action; `admin` (set at `init`) is not
-read anywhere else in `lib.rs`.
+## Why an escrow needs both a DB row and a chain registration
 
-| Role | Set by / when | Can call |
+`Escrow` rows exist in Postgres regardless of blockchain configuration —
+creating one never depends on a reachable Soroban RPC. A row becomes
+*chain-eligible* only when it has an `arbitratorWallet` (the contract
+requires one; the DB allows null) and its `asset` resolves to a real
+Soroban token contract (`BlockchainService.resolveAssetContract` — derived
+deterministically from the SDK, e.g. `Asset.native().contractId(...)` for
+XLM, never a hardcoded/guessed address table).
+
+For a chain-eligible escrow, every state-changing call
+(`fund`/`release`/`refund`/`dispute`/`resolve`) requires a
+`stellarTxHash` and is verified against live contract state
+(`BlockchainService.verifyOnChain` in `Backend/src/escrows/escrows.service.ts`)
+before the DB row's status changes — the API never trusts a client-supplied
+hash on faith. Eligibility itself is *recomputed* from the escrow's
+existing fields every time, not stored as a flag, specifically so the DB
+and the chain can never drift out of sync with each other.
+
+For a non-chain-eligible escrow (no arbitrator, or an unresolvable asset),
+every action falls back to the original DB-only behavior — nothing about
+enabling the blockchain integration is a breaking change for existing rows.
+
+## Monorepo boundaries
+
+| Package | Depends on | Publishes |
 |---|---|---|
-| **Sender** | Caller of `create_shipment` | `cancel_shipment` (while `Open`), `reclaim_expired` (after deadline, while `Open`), `raise_dispute` |
-| **Carrier** | Whoever calls `accept_shipment` first on an `Open` shipment | `confirm_pickup`, `raise_dispute` |
-| **Receiver** | Set by the sender in `create_shipment`; need not be a platform account | `confirm_delivery`, `raise_dispute` |
-| **Arbiter** | Set once at `init(admin, arbiter)` | `resolve_dispute` only |
+| `packages/database` | Prisma schema | `@stellar-escrow/database` (Postgres client) |
+| `Blockchain/contracts/escrow` | soroban-sdk (Rust) | the deployed WASM contract |
+| `Blockchain/sdk` | `@stellar/stellar-sdk` | `@stellar-escrow/blockchain` — internal contract client, used only by `Backend` |
+| `sdks/typescript` | nothing but `fetch` | `@stellar-escrow/sdk` — the **public** API client, what integrators install |
+| `Backend` | `database`, `blockchain` | the NestJS API |
+| `Frontend` | none of the above | the dashboard/marketing site, talks to `Backend` over HTTP only |
 
-`require_carrier` (a private helper in `lib.rs`) distinguishes "no
-carrier yet" (`Error::ShipmentNotOpen`) from "a different carrier
-already claimed this" (`Error::WrongCarrier`) so callers get a
-specific reason, not a generic auth failure.
+The two TypeScript "SDK" packages exist for different audiences and don't
+share code: `Blockchain/sdk` is Backend-internal plumbing for talking to
+the Soroban contract directly; `sdks/typescript` is what a developer
+integrating with the *hosted API* installs, and never touches Soroban
+directly.
 
-## Fund movement
+## Where to look for more detail
 
-The contract never holds a private accounting ledger for value — every
-transfer goes through the standard Stellar Asset Contract interface
-via `token::Client`:
-
-- `create_shipment` calls `token_client.transfer(sender, contract, total_amount)`
-  to pull funds into escrow.
-- `transfer_out` (a private helper) wraps
-  `token_client.transfer(contract, to, amount)` for every payout path:
-  the pickup share in `confirm_pickup`, the remaining balance in
-  `confirm_delivery`, refunds in `cancel_shipment` /
-  `reclaim_expired`, and both shares of a resolved dispute in
-  `resolve_dispute`.
-- `shipment.released_amount` is the running total already paid out; it
-  is checked against `total_amount` rather than trusted from caller
-  input, so a shipment can never release more than it was funded with.
-
-## Basis points math
-
-`pickup_release_bps` and `resolve_dispute`'s `sender_bps` are both
-validated to be `<= 10_000` (100%) before use. Splits are computed as
-`(amount * bps) / 10_000` using `i128` arithmetic — the same asset
-precision Soroban token contracts use — and any dispute remainder goes
-to whichever side gets the second calculation
-(`remaining - sender_share` for the carrier), so the two shares always
-sum exactly to `remaining` with no rounding leakage.
-
-## Why ledger sequence, not timestamps
-
-`delivery_deadline_ledger` (checked in `reclaim_expired` against
-`env.ledger().sequence()`) uses the Stellar ledger's monotonic
-sequence number rather than `env.ledger().timestamp()`. Both are
-available on `Env`, but the sequence number is the value every
-validator agrees on deterministically at close, which matters for a
-condition that unlocks a sender's refund.
+- `Blockchain/README.md` — the contract's state machine, deployment steps,
+  and why the codec is verified against real contract-emitted XDR rather
+  than assumed from docs.
+- `Infra/terraform/README.md` — what's actually provisioned on AWS and
+  what's still a manual, gated step.
+- `SECURITY.md` — known limitations and the vulnerability disclosure process.

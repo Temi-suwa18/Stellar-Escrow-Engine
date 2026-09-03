@@ -1,10 +1,53 @@
-/target
-**/*.rs.bk
-Cargo.lock.bak
-test_snapshots/
-.soroban
-.stellar
-*.wasm
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+.turbo/
+
+# Environment
 .env
+.env.local
+.env.*.local
+!.env.example
+
+# Testing / coverage
+coverage/
+playwright-report/
+test-results/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editors / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
 .DS_Store
-.contract-id.*
+*.swp
+
+# Prisma
+packages/database/generated/
+
+# Soroban / Rust
+Blockchain/target/
+Blockchain/**/*.wasm
+Blockchain/**/test_snapshots/
+
+# Terraform
+Infra/terraform/.terraform/
+Infra/terraform/*.tfstate
+Infra/terraform/*.tfstate.*
+Infra/terraform/*.tfplan
+Infra/terraform/.terraform.lock.hcl.backup
+
+# Misc
+.vercel/
+.netlify/

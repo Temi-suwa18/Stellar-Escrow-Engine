@@ -1,0 +1,83 @@
+# Terraform — AWS deployment
+
+Deploys ESCRA onto AWS Fargate: VPC (public + private subnets across 2 AZs,
+NAT gateways), an ALB routing `web` at `<domain>` and `api` at
+`api.<domain>` by host header, ECS Fargate services for `Backend` and
+`Frontend`, RDS Postgres, ElastiCache Redis, ECR repositories, and the
+Secrets Manager entries + IAM roles the ECS tasks need to read them.
+
+This is a starting point, not a finished production setup — see
+"Not yet handled" below before pointing it at a real account.
+
+## Usage
+
+```bash
+cd Infra/terraform
+terraform init
+terraform plan -var="domain_name=escra.yourdomain.com" -var="certificate_arn=arn:aws:acm:..."
+terraform apply
+```
+
+Without `certificate_arn`, the ALB serves plain HTTP with host-based
+routing — fine for a first smoke test, not for anything real. Request an
+ACM certificate for `yourdomain.com` and `api.yourdomain.com` (or a
+wildcard) first.
+
+After `apply`, point your DNS at the `alb_dns_name` output:
+- `yourdomain.com` → ALB (web)
+- `api.yourdomain.com` → ALB (api)
+
+### Pushing images
+
+`aws_ecs_task_definition` references `<ecr_repo>:<var.api_image_tag>` /
+`:<var.web_image_tag>` (defaulting to `latest`). CI does this automatically
+on every push to `main` (see `.github/workflows/ci.yml`'s `docker-push`
+job) — the manual version below is for pushing a one-off build, or if CI
+isn't set up yet:
+
+```bash
+aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <account>.dkr.ecr.<region>.amazonaws.com
+
+docker build -f Backend/Dockerfile -t <ecr_api_repository_url>:<tag> .
+docker push <ecr_api_repository_url>:<tag>
+
+docker build -f Frontend/Dockerfile -t <ecr_web_repository_url>:<tag> .
+docker push <ecr_web_repository_url>:<tag>
+
+terraform apply -var="api_image_tag=<tag>" -var="web_image_tag=<tag>"
+```
+
+### Remote state
+
+State is local by default. Uncomment the `backend "s3"` block in
+`versions.tf` once an S3 bucket + DynamoDB lock table exist, then
+`terraform init -migrate-state`.
+
+## Not yet handled
+
+- **Secret values**: Terraform creates the Secrets Manager entries for JWT/
+  session/webhook secrets (`aws_secretsmanager_secret.app`) but doesn't
+  populate them — `DATABASE_URL` and `REDIS_URL` are derived and written
+  automatically, but the four app secrets need a value set out-of-band
+  (`aws secretsmanager put-secret-value`) before the api task can boot
+  cleanly, per `Backend/src/config/env.validation.ts`'s required fields.
+- **CI/CD**: `.github/workflows/ci.yml`'s `docker-push` job builds and pushes
+  both images to the ECR repos this Terraform creates on every push to
+  `main` (via OIDC — see the comments on that job for the IAM role/trust
+  policy it needs). It does not run `terraform apply` or update the ECS
+  services to the new image automatically — that's still a manual
+  `terraform apply -var="api_image_tag=<sha>" -var="web_image_tag=<sha>"`,
+  deliberately: infrastructure changes and ECS deploys are a bigger blast
+  radius than most teams want fully automatic without a gate.
+- **DNS**: no `aws_route53_zone`/`aws_route53_record` — this assumes the
+  domain is managed elsewhere and you'll point it at `alb_dns_name`
+  manually.
+
+## Autoscaling
+
+Both services target-track CPU utilization (`var.autoscaling_target_cpu_percent`,
+default 60%) between `var.{api,web}_min_capacity` and `var.{api,web}_max_capacity`.
+`desired_count` on the `aws_ecs_service` resources only sets the *initial*
+task count — the services have `lifecycle { ignore_changes = [desired_count] }`
+so a later `terraform apply` doesn't reset whatever the autoscaler has since
+scaled to.
