@@ -85,3 +85,4 @@ describe('TokenService', () => {
     expect(() => shortLivedService.verifyAccessToken(token)).toThrow(/expired/i);
   });
 });
+

@@ -297,3 +297,4 @@ fn print_sample_escrow_xdr_for_client_fixture() {
         status_scval.to_xdr_base64(Limits::none()).unwrap()
     );
 }
+

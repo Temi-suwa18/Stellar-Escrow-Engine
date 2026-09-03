@@ -33,3 +33,4 @@ resource "aws_secretsmanager_secret_version" "redis_url" {
   secret_id     = aws_secretsmanager_secret.redis_url.id
   secret_string = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:${aws_elasticache_cluster.redis.cache_nodes[0].port}"
 }
+

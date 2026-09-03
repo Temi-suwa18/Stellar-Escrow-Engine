@@ -116,3 +116,4 @@ adding `ESCROW_CONTRACT_ID` to `Backend/.env`, having the Backend hold (or
 broker signing for) the arbiter/platform key, and calling into
 `@stellar-escrow/blockchain` from `EscrowsService` alongside the Prisma
 writes so the database row and on-chain state stay in sync.
+

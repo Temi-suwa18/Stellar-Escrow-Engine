@@ -25,3 +25,4 @@ export class RegisterDto {
   @MaxLength(120)
   organizationName!: string;
 }
+

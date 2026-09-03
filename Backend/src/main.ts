@@ -89,3 +89,4 @@ bootstrap().catch((error: unknown) => {
   console.error('Fatal error during bootstrap', error);
   process.exit(1);
 });
+

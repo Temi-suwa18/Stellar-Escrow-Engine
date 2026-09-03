@@ -67,3 +67,4 @@ export class OrganizationsController {
     return this.organizations.removeMember(organizationId, memberId);
   }
 }
+

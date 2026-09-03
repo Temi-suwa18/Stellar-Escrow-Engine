@@ -7,3 +7,4 @@ import { OrganizationsService } from './organizations.service';
   providers: [OrganizationsService],
 })
 export class OrganizationsModule {}
+

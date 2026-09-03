@@ -79,3 +79,4 @@ function generateRecoveryCode(): string {
     .match(/.{1,5}/g)!
     .join('-');
 }
+

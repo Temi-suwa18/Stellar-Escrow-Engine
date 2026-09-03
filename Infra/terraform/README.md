@@ -81,3 +81,4 @@ default 60%) between `var.{api,web}_min_capacity` and `var.{api,web}_max_capacit
 task count — the services have `lifecycle { ignore_changes = [desired_count] }`
 so a later `terraform apply` doesn't reset whatever the autoscaler has since
 scaled to.
+

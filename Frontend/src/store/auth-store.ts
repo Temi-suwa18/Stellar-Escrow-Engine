@@ -35,3 +35,4 @@ export const useAuthStore = create<AuthState>()(
     { name: 'escra-auth' },
   ),
 );
+

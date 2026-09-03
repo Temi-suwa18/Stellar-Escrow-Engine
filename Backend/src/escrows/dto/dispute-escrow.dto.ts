@@ -47,3 +47,4 @@ export class ResolveDisputeDto {
   @MinLength(1)
   stellarTxHash?: string;
 }
+

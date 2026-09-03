@@ -16,3 +16,4 @@ process.env.STELLAR_NETWORK_PASSPHRASE =
   process.env.STELLAR_NETWORK_PASSPHRASE ?? 'Test SDF Network ; September 2022';
 process.env.WEBHOOK_SIGNING_SECRET =
   process.env.WEBHOOK_SIGNING_SECRET ?? 'test-webhook-secret-at-least-32-chars-long';
+

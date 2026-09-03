@@ -122,3 +122,4 @@ export class BlockchainService {
     return status === rpc.Api.GetTransactionStatus.SUCCESS;
   }
 }
+

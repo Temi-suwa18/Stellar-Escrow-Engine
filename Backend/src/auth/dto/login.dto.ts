@@ -15,3 +15,4 @@ export class LoginDto {
   @IsString()
   twoFactorToken?: string;
 }
+

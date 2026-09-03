@@ -33,3 +33,4 @@ describe('slugify', () => {
     expect(slugify('Store 24/7')).toBe('store-24-7');
   });
 });
+

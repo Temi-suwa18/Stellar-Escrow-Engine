@@ -51,3 +51,4 @@ resource "aws_iam_role" "ecs_task" {
     }]
   })
 }
+

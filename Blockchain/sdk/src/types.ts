@@ -62,3 +62,4 @@ export interface ResolveEscrowParams {
   escrowId: bigint;
   releaseToSeller: boolean;
 }
+

@@ -85,3 +85,4 @@ export class CreateEscrowDto {
   @Max(365)
   autoReleaseAfterDays?: number;
 }
+

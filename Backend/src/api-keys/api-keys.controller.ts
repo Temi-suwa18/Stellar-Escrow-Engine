@@ -35,3 +35,4 @@ export class ApiKeysController {
     return this.apiKeys.revoke(organizationId, apiKeyId);
   }
 }
+

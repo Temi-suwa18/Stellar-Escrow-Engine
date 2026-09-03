@@ -26,3 +26,4 @@ describe('escapeHtml', () => {
     expect(escapeHtml('')).toBe('');
   });
 });
+

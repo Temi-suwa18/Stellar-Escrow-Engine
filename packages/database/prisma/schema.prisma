@@ -919,3 +919,4 @@ model OrganizationSettings {
 
   @@map("organization_settings")
 }
+

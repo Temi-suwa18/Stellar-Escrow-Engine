@@ -9,3 +9,4 @@
   "transformIgnorePatterns": ["node_modules/(?!.*(@noble|uint8array-extras))"],
   "setupFiles": ["<rootDir>/env.setup.js"]
 }
+

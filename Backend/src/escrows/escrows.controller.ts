@@ -100,3 +100,4 @@ export class EscrowsController {
     return this.escrows.resolve(apiKey.organizationId, id, dto);
   }
 }
+

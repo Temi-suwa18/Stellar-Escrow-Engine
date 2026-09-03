@@ -112,3 +112,4 @@ export interface OnChainState {
     status: string;
   } | null;
 }
+

@@ -12,3 +12,4 @@ export class FundEscrowDto {
   @IsString()
   contractAddress?: string;
 }
+

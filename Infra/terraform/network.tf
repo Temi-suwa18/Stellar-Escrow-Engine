@@ -199,3 +199,4 @@ resource "aws_security_group" "redis" {
 
   tags = { Name = "escra-redis-sg" }
 }
+

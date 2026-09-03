@@ -6,3 +6,4 @@ export class GoogleAuthGuard extends AuthGuard('google') {}
 
 @Injectable()
 export class GithubAuthGuard extends AuthGuard('github') {}
+

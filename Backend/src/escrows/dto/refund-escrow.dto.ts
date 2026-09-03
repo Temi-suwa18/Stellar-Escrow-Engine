@@ -14,3 +14,4 @@ export class RefundEscrowDto {
   @MinLength(1)
   stellarTxHash?: string;
 }
+

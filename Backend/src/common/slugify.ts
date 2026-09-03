@@ -7,3 +7,4 @@ export default function slugify(input: string): string {
     .replace(/^-+|-+$/g, '');
   return slug || 'org';
 }
+

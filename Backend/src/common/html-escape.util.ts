@@ -15,3 +15,4 @@ const HTML_ESCAPES: Record<string, string> = {
 export function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char] ?? char);
 }
+

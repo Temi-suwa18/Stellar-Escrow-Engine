@@ -60,3 +60,4 @@ describe('HealthController', () => {
     expect(check).toHaveBeenCalledTimes(1);
   });
 });
+

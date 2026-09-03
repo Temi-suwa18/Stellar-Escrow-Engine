@@ -14,3 +14,4 @@ describe('cn', () => {
     expect(cn('px-2', false && 'hidden', undefined, null, 'text-sm')).toBe('px-2 text-sm');
   });
 });
+

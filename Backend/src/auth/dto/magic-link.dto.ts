@@ -12,3 +12,4 @@ export class VerifyMagicLinkDto {
   @IsString()
   token!: string;
 }
+

@@ -170,3 +170,4 @@ export class StellarEscrow {
     return this.request<OnChainState>(`/escrows/${encodeURIComponent(escrowId)}/on-chain`);
   }
 }
+

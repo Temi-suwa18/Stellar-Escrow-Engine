@@ -53,3 +53,4 @@ resource "aws_elasticache_cluster" "redis" {
 
   tags = { Name = "escra-redis" }
 }
+

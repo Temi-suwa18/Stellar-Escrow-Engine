@@ -141,3 +141,4 @@ variable "domain_name" {
   type        = string
   default     = "escra.example.com"
 }
+

@@ -18,3 +18,4 @@ export function classicAssetContractId(
 ): string {
   return new Asset(code, issuer).contractId(networkPassphrase);
 }
+

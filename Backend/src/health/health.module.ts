@@ -10,3 +10,4 @@ import { DatabaseHealthIndicator } from './database.health';
   providers: [RedisHealthIndicator, DatabaseHealthIndicator],
 })
 export class HealthModule {}
+

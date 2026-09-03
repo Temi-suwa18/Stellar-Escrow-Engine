@@ -53,3 +53,4 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     });
   }
 }
+

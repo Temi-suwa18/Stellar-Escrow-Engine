@@ -855,3 +855,4 @@ ALTER TABLE "daily_org_metrics" ADD CONSTRAINT "daily_org_metrics_organizationId
 -- AddForeignKey
 ALTER TABLE "organization_settings" ADD CONSTRAINT "organization_settings_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
+

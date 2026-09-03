@@ -94,3 +94,4 @@ describe('SignupForm', () => {
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
   });
 });
+

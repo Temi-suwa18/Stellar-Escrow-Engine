@@ -10,3 +10,4 @@ ALTER COLUMN "contractAddress" DROP NOT NULL;
 -- CreateIndex
 CREATE INDEX "escrows_status_autoReleaseAt_idx" ON "escrows"("status", "autoReleaseAt");
 
+

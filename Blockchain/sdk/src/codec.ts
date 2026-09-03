@@ -28,3 +28,4 @@ export function decodeEscrow(scVal: xdr.ScVal): Escrow {
     status: decodeStatus(raw.status),
   };
 }
+

@@ -13,3 +13,4 @@ export class CreateApiKeyDto {
   @IsEnum(ApiKeyMode)
   mode!: ApiKeyMode;
 }
+

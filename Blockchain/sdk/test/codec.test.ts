@@ -41,3 +41,4 @@ describe('decodeEscrow', () => {
     expect(() => decodeStatus(['NotARealStatus'])).toThrow(/Unrecognized escrow status/);
   });
 });
+

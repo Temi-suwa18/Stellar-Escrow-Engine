@@ -16,3 +16,4 @@ export interface AuthRequest extends Request {
   user?: AuthenticatedUser;
   apiKey?: AuthenticatedApiKey;
 }
+

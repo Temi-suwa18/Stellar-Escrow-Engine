@@ -55,3 +55,4 @@ describe('prisma client shape', () => {
     expect(new Set(actualModels)).toEqual(new Set(expectedModels));
   });
 });
+

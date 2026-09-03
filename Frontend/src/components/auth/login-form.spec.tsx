@@ -82,3 +82,4 @@ describe('LoginForm', () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 });
+

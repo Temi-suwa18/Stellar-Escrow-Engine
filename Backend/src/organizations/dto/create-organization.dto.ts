@@ -8,3 +8,4 @@ export class CreateOrganizationDto {
   @MaxLength(120)
   name!: string;
 }
+
